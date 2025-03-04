@@ -1,3 +1,5 @@
+using Passenger.Services;
+
 namespace Passenger;
 
 public class Program
@@ -9,6 +11,8 @@ public class Program
         // Add services to the container.
 
         builder.Services.AddControllers();
+        builder.Services.AddHostedService<DriverService>();
+        builder.Services.AddSingleton<IPassengerService, PassengerService>();
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
