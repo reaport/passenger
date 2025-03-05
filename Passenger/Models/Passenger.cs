@@ -23,39 +23,35 @@ public class Passenger
         return passenger;
     }
 
-    public static Passenger CreateOnPlane(IEnumerable<string> mealPref, float baggageWeight, Guid ticketId)
+    public static Passenger CreateOnPlane(IEnumerable<string> mealPref, float baggageWeight/*, Guid ticketId*/)
     {
         Passenger passenger = new Passenger
         {
             PassengerId = new Guid(),
             MealPreference = mealPref,
             BaggageWeight = baggageWeight,
-            TicketId = ticketId,
+            TicketId = null,
+            //TicketId = ticketId,
             Status = PassengerStatus.OnPlane
         };
 
         return passenger;
     }
 
-    public void SetBoughtTicket(Guid ticketId)
+    public async Task BuyTicket(Guid ticketId)
     {
         TicketId = ticketId;
         Status = PassengerStatus.AwaitingRegistration;
     }
 
-    public void SetStatusRegistered()
+    public async Task RegisterForFlight()
     {
         Status = PassengerStatus.AwaitingBoarding;
     }
 
-    public void SetStatusBoarding()
+    public async Task AttemptBoarding()
     {
         Status = PassengerStatus.InTransit;
-    }
-
-    public void SetStatusBoarded()
-    {
-        Status = PassengerStatus.OnPlane;
     }
 
 }
