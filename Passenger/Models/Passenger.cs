@@ -7,6 +7,8 @@ public class Passenger
     public float BaggageWeight {get; private set;}
     public Guid? TicketId {get;private set; }
     public PassengerStatus Status {get; private set;}
+    // This shit will be responsible for communicating with the other modules, put behind an interface for testability
+    // private IInteractionLayer _interactionLayer
     private Passenger(){}
     
     public static Passenger CreateInAirportStartingPoint(IEnumerable<string> mealPref, float baggageWeight)
@@ -38,20 +40,23 @@ public class Passenger
         return passenger;
     }
 
-    public async Task BuyTicket(Guid ticketId)
+    public async Task<bool> BuyTicket()
     {
-        TicketId = ticketId;
+        TicketId = null;
         Status = PassengerStatus.AwaitingRegistration;
+        return true;
     }
 
-    public async Task RegisterForFlight()
+    public async Task<bool> RegisterForFlight()
     {
         Status = PassengerStatus.AwaitingBoarding;
+        return true;
     }
 
-    public async Task AttemptBoarding()
+    public async Task<bool> AttemptBoarding()
     {
         Status = PassengerStatus.InTransit;
+        return true;
     }
 
 }
