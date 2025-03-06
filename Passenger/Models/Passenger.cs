@@ -1,3 +1,5 @@
+using Passenger.Services;
+
 namespace Passenger.Models;
 
 public class Passenger
@@ -8,12 +10,16 @@ public class Passenger
     public Guid? TicketId {get;private set; }
     public PassengerStatus Status {get; private set;}
     // This shit will be responsible for communicating with the other modules, put behind an interface for testability
-    // private IInteractionLayer _interactionLayer
-    private Passenger(){}
-    
-    public static Passenger CreateInAirportStartingPoint(IEnumerable<string> mealPref, float baggageWeight)
+    // Figure out how to inject it while keeping these factory methods
+    private IInteractionService _interactionService;
+    private Passenger(IInteractionService interactionService)
     {
-        Passenger passenger = new Passenger
+        _interactionService = interactionService;
+    }
+    
+    public static Passenger CreateInAirportStartingPoint(IInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight)
+    {
+        Passenger passenger = new Passenger(interactionService)
         {
             PassengerId = new Guid(),
             MealPreference = mealPref,
@@ -25,9 +31,9 @@ public class Passenger
         return passenger;
     }
 
-    public static Passenger CreateOnPlane(IEnumerable<string> mealPref, float baggageWeight/*, Guid ticketId*/)
+    public static Passenger CreateOnPlane(IInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight/*, Guid ticketId*/)
     {
-        Passenger passenger = new Passenger
+        Passenger passenger = new Passenger(interactionService)
         {
             PassengerId = new Guid(),
             MealPreference = mealPref,

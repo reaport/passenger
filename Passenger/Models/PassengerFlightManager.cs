@@ -6,8 +6,7 @@ namespace Passenger.Models;
 public class PassengerFlightManager
 {
     private ConcurrentBag<Passenger> _passengers;
-    public string FlightId {get; private set;}
     private IPassengerStrategy _passengerStrategy;
-    
-    
+    public string FlightId {get; private set;}
+
 }
