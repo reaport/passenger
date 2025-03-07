@@ -9,8 +9,6 @@ public class Passenger
     public float BaggageWeight {get; private set;}
     public Guid? TicketId {get;private set; }
     public PassengerStatus Status {get; private set;}
-    // This shit will be responsible for communicating with the other modules, put behind an interface for testability
-    // Figure out how to inject it while keeping these factory methods
     private IInteractionService _interactionService;
     private Passenger(IInteractionService interactionService)
     {

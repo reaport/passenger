@@ -1,18 +1,11 @@
 
-
 using Passenger.Models;
 
 namespace Passenger.Services;
 
-public class PlaneStartPassengerStrategy : IPassengerStrategy
+public class AirportStartPassengerStrategy : IPassengerStrategy
 {
-    public PlaneStartPassengerFactory _factory;
     private readonly Queue<Func<Models.Passenger, Task>> _passengerSteps;
-    public Models.Passenger CreatePassenger(IEnumerable<string> mealPref, float baggageWeight)
-    {
-        return _factory.Create(mealPref, baggageWeight);
-    }
-
     public async Task ExecutePassengerAction(Models.Passenger passenger)
     {
         if(_passengerSteps.Count > 0)
