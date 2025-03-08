@@ -9,13 +9,13 @@ public class Passenger
     public float BaggageWeight {get; private set;}
     public Guid? TicketId {get;private set; }
     public PassengerStatus Status {get; private set;}
-    private IInteractionService _interactionService;
-    private Passenger(IInteractionService interactionService)
+    private IPassengerInteractionService _interactionService;
+    private Passenger(IPassengerInteractionService interactionService)
     {
         _interactionService = interactionService;
     }
     
-    public static Passenger CreateInAirportStartingPoint(IInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight)
+    public static Passenger CreateInAirportStartingPoint(IPassengerInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight)
     {
         Passenger passenger = new Passenger(interactionService)
         {
@@ -29,7 +29,7 @@ public class Passenger
         return passenger;
     }
 
-    public static Passenger CreateOnPlane(IInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight/*, Guid ticketId*/)
+    public static Passenger CreateOnPlane(IPassengerInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight/*, Guid ticketId*/)
     {
         Passenger passenger = new Passenger(interactionService)
         {

@@ -32,7 +32,7 @@ public class DriverService : IDriverService
     {
         while (await timer.WaitForNextTickAsync() && !cancellationToken.IsCancellationRequested)
         {
-            await _passengerService.RefreshAvailableFlights();
+            await _passengerService.RefreshAndInitFlights();
             _logger.LogInformation($"Refreshed available flights.");
         }
     }

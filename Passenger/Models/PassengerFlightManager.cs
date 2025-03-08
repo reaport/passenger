@@ -40,7 +40,7 @@ public class PassengerFlightManager
     }
     public async Task ExecutePassengerActions()
     {
-        var result = new List<Task>();
+        var result = new List<Task>(_passengers.Count);
         Parallel.ForEach
         (
             _passengers,

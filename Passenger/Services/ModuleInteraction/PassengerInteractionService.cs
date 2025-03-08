@@ -1,6 +1,6 @@
 namespace Passenger.Services;
 
-public interface PassengerInteractionService : IInteractionService
+public interface PassengerInteractionService : IPassengerInteractionService
 {
     
 }
