@@ -1,5 +1,6 @@
-
+using Passenger.Infrastructure.DTO;
 using Passenger.Models;
+using System.Linq;
 
 namespace Passenger.Services;
 
@@ -27,7 +28,10 @@ public class PassengerService : IPassengerService
     public async Task RefreshAndInitFlights()
     {
         var availableFlights = await _flightRefreshService.GetAvailableFlights();
-        var existingFlights = _flightManagers.Select(fm => fm._flightInfo);
+        
+        var existingFlights = _flightManagers.AsEnumerable().Select(fm => fm._flightInfo);
+
+        // if(availableFlights is null || existingFlights is null) throw new Exception();
 
         var flightsToInit = availableFlights.Except(existingFlights, new FlightIdComparer());
 

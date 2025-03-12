@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 using Passenger.Services;
 
 namespace Passenger.Models;
@@ -44,7 +45,7 @@ public class Passenger
         return passenger;
     }
 
-    public async Task<bool> BuyTicket()
+    public async Task<bool> BuyTicket(Guid flightId)
     {
         TicketId = null;
         Status = PassengerStatus.AwaitingRegistration;
@@ -61,6 +62,11 @@ public class Passenger
     {
         Status = PassengerStatus.InTransit;
         return true;
+    }
+
+    public async Task Die()
+    {
+        // ded
     }
 
 }

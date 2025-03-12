@@ -1,11 +1,13 @@
-namespace Passenger.Models;
+using Passenger.Models;
+
+namespace Passenger.Infrastructure.DTO;
 
 public class FlightInfo
 {
     public Guid FlightId {get;set;}
     public int EconomySeats {get;set;}
     public int VIPSeats {get;set;}
-    public IEnumerable<string> AvailableMealOptions {get;set;}
+    public IEnumerable<MealType> AvailableMealTypes {get;set;}
     public DateTime RegistratationStartTime {get;set;}
     public DateTime RegistrationEndTime {get;set;}
 }
@@ -19,7 +21,6 @@ public class FlightIdComparer : IEqualityComparer<FlightInfo>
         
         return x.FlightId == y.FlightId;
     }
-
     public int GetHashCode(FlightInfo obj)
     {
         return obj.FlightId.GetHashCode();

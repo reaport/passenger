@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Passenger.Infrastructure.DTO;
 using Passenger.Services;
 
 namespace Passenger.Models;

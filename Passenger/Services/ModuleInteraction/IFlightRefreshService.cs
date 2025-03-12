@@ -1,4 +1,4 @@
-using Passenger.Models;
+using Passenger.Infrastructure.DTO;
 
 namespace Passenger.Services;
 
