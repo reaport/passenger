@@ -15,7 +15,7 @@ public class PassengerInteractionService : IPassengerInteractionService
     public async Task<ApiResponse<TicketPurchaseResponse>> BuyTicketAsync(TicketPurchaseRequest request)
     {
         var httpClient = _httpClientFactory.CreateClient("tickets");
-        var response = await httpClient.PostAsJsonAsync("/buy", request);
+        var response = await httpClient.PostAsJsonAsync("buy", request);
 
         if (response.IsSuccessStatusCode)
         {

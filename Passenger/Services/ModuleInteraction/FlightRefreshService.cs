@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Passenger.Infrastructure.DTO;
+using Passenger.Infrastructure.DTO.HUETA;
 
 namespace Passenger.Services;
 
@@ -19,7 +20,10 @@ public class FlightRefreshService : IFlightRefreshService
         // Tickets because ofc this makes sense...
         var httpClient = _httpClientFactory.CreateClient("tickets");
 
-        var requestBody = new StringContent("\"\"", Encoding.UTF8, "application/json"); // Empty string as per API spec
+        var requestBodyObject = new BuyTicketRequest(); // All properties are null by default
+        var requestBodyJson = JsonSerializer.Serialize(requestBodyObject, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
+        var requestBody = new StringContent(requestBodyJson, Encoding.UTF8, "application/json");
+
         HttpResponseMessage response = await httpClient.PostAsync("buy", requestBody);
         
         if (!response.IsSuccessStatusCode)
@@ -36,12 +40,60 @@ public class FlightRefreshService : IFlightRefreshService
             throw new Exception("Invalid response format: 'availableFlights' not found");
         }
 
-        var flights = JsonSerializer.Deserialize<List<FlightInfo>>(flightsElement.GetRawText(), new JsonSerializerOptions
+        var flights = JsonSerializer.Deserialize<List<TicketCrapFlightInfo>>(flightsElement.GetRawText(), new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         });
 
-        return flights ?? [];
+        List<string>? meals = new();
 
+        if(flights is not null && flights.Count > 0)
+        {
+            meals = await GetAvailableMealTypesAsync(flights.First().FlightId);
+        }
+
+        return flights?.Select( flightCrapInfo =>
+            new FlightInfo
+            {
+                FlightId = new Guid(flightCrapInfo.FlightId!),
+                EconomySeats = flightCrapInfo.AvailableSeats!["economy"],
+                VIPSeats = flightCrapInfo.AvailableSeats["business"],
+                AvailableMealTypes = meals
+            }
+        ) 
+        ?? [];
+
+    }
+
+    public async Task<List<string>> GetAvailableMealTypesAsync(string flightId)
+    {
+        var httpClient = _httpClientFactory.CreateClient("tickets");
+
+        var requestBodyObject = new BuyTicketRequest { FlightId = flightId };
+        var requestBodyJson = JsonSerializer.Serialize(requestBodyObject, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
+        var requestBody = new StringContent(requestBodyJson, Encoding.UTF8, "application/json");
+        
+        HttpResponseMessage response = await httpClient.PostAsync("buy", requestBody);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"Error fetching meal types: {response.StatusCode}");
+        }
+        
+        string responseContent = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(responseContent);
+        var root = doc.RootElement;
+
+        if (!root.TryGetProperty("availableMealOptions", out JsonElement mealElement))
+        {
+            throw new Exception("Invalid response format: 'availableMealOptions' not found");
+        }
+
+        var mealTypes = JsonSerializer.Deserialize<List<string>>(mealElement.GetRawText(), new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        return mealTypes ?? new List<string>();
     }
 }
