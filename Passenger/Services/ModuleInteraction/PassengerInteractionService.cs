@@ -37,7 +37,7 @@ public class PassengerInteractionService : IPassengerInteractionService
     public async Task<ApiResponse<RegisterPassengerResponse>> RegisterPassengerAsync(RegisterPassengerRequest request)
     {
         var httpClient = _httpClientFactory.CreateClient("register");
-        var response = await httpClient.PostAsJsonAsync("/passenger", request);
+        var response = await httpClient.PostAsJsonAsync("passenger", request);
 
         if (response.IsSuccessStatusCode)
         {
