@@ -17,6 +17,30 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        #region HTTP client registration
+        builder.Services.AddHttpClient(
+            "board",
+            client =>
+            {
+                client.BaseAddress = new Uri("https://flight-board.rea.ru/");
+            });
+
+        builder.Services.AddHttpClient(
+            "tickets",
+            client =>
+            {
+                client.BaseAddress = new Uri("https://tickets.rea.ru/");
+            });
+
+        builder.Services.AddHttpClient(
+            "register",
+            client =>
+            {
+                client.BaseAddress = new Uri("https://register.rea.ru/");
+            });
+        
+        #endregion
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
