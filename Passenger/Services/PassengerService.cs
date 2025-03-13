@@ -8,8 +8,10 @@ public class PassengerService : IPassengerService
 {
     private List<PassengerFlightManager> _flightManagers;
     private IFlightRefreshService _flightRefreshService;
-    private PassengerService(IFlightRefreshService flightRefreshService)
+    private IServiceProvider _serviceProvider;
+    public PassengerService(IFlightRefreshService flightRefreshService, IServiceProvider serviceProvider)
     {
+        _serviceProvider = serviceProvider;
         _flightRefreshService = flightRefreshService;
         _flightManagers = new(5);
     }
@@ -37,8 +39,14 @@ public class PassengerService : IPassengerService
 
         if(flightsToInit.Any())
         {
-            //TODO init flight manager for new flight
-            
+            foreach (var flightInfo in flightsToInit)
+            {
+                var strategy = _serviceProvider.GetRequiredService<IPassengerStrategy>();
+                var factory = _serviceProvider.GetRequiredService<IPassengerFactory>();
+
+                var flightManager = new PassengerFlightManager(strategy, factory, flightInfo);
+                _flightManagers.Add(flightManager);
+            }
         }
         
     }

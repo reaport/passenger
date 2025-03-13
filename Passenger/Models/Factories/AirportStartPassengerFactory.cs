@@ -9,9 +9,9 @@ public class AirportStartPassengerFactory : IPassengerFactory
     {
         _interactionService = interactionService;
     }
-    public Passenger Create(IEnumerable<string> mealPref, float baggageWeight)
+    public Passenger Create(IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass)
     {
-        return Passenger.CreateInAirportStartingPoint(_interactionService, mealPref, baggageWeight);
+        return Passenger.CreateInAirportStartingPoint(_interactionService, mealPref, baggageWeight, passengerClass);
     }
 
 }

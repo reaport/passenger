@@ -49,7 +49,7 @@ public class FlightRefreshService : IFlightRefreshService
 
         if(flights is not null && flights.Count > 0)
         {
-            meals = await GetAvailableMealTypesAsync(flights.First().FlightId);
+            meals = await GetAvailableMealTypesAsync(flights.First().FlightId!);
         }
 
         return flights?.Select( flightCrapInfo =>

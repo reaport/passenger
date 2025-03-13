@@ -18,23 +18,21 @@ public class PassengerFlightManager
         _factory = factory;
         _flightInfo = flightInfo;
 
-        //TODO differentiate between VIP and plebian passengers
-        PopulatePassengerBag(_flightInfo.EconomySeats, _flightInfo.VIPSeats);
+        PopulatePassengerBag(_flightInfo.EconomySeats, _flightInfo.VIPSeats, flightInfo.AvailableMealTypes);
     }
 
-    public Task PopulatePassengerBag(int plebCount, int vipCount)
+    public Task PopulatePassengerBag(int plebCount, int vipCount, IEnumerable<string> mealPref)
     {
-        //TODO implement proper pref and baggage gen
-        IEnumerable<string> mealPref = ["asdf", "srfd"];
+        //TODO implement proper baggage gen
 
         for(int i = 0; i < plebCount; i++)
         {
-            _passengers.Add(_factory.Create(mealPref, 10.43f));
+            _passengers.Add(_factory.Create(mealPref, 10.43f, PassengerClass.Economy));
         }
 
         for(int i = 0; i< vipCount; i++)
         {
-            _passengers.Add(_factory.Create(mealPref, 999.0f));
+            _passengers.Add(_factory.Create(mealPref, 999.0f, PassengerClass.Business));
         }
 
         return Task.CompletedTask;
