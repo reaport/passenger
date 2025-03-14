@@ -28,7 +28,7 @@ public class Passenger
     {
         Passenger passenger = new Passenger(interactionService, logger)
         {
-            PassengerId = new Guid(),
+            PassengerId = Guid.NewGuid(),
             MealPreference = mealPref,
             MealChoicesBecauseImDumb = mealPref.ToList(),
             BaggageWeight = baggageWeight,
@@ -44,7 +44,7 @@ public class Passenger
     {
         Passenger passenger = new Passenger(interactionService, logger)
         {
-            PassengerId = new Guid(),
+            PassengerId = Guid.NewGuid(),
             MealPreference = mealPref,
             MealChoicesBecauseImDumb = mealPref.ToList(),
             BaggageWeight = baggageWeight,
