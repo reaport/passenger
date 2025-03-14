@@ -36,6 +36,11 @@ public class PassengerService : IPassengerService
         await Task.WhenAll(taskList);
     }
 
+    public List<PassengerFlightManager> GetFlightManagers()
+    {
+        return _flightManagers;
+    }
+
     public async Task RefreshAndInitFlights()
     {
         var availableFlights = await _flightRefreshService.GetAvailableFlights();
