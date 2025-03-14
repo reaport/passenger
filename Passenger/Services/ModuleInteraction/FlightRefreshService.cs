@@ -30,7 +30,7 @@ public class FlightRefreshService : IFlightRefreshService
         {
             throw new Exception($"Error fetching flights: {response.StatusCode}");
         }
-        
+
         string responseContent = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(responseContent);
         var root = doc.RootElement;
@@ -44,13 +44,17 @@ public class FlightRefreshService : IFlightRefreshService
         {
             PropertyNameCaseInsensitive = true
         });
-
+        
+        _logger.LogInformation($"Received {flights.Count} flights");
+        
         List<string>? meals = new();
 
         if(flights is not null && flights.Count > 0)
         {
             meals = await GetAvailableMealTypesAsync(flights.First().FlightId!);
         }
+
+        _logger.LogInformation($"Received {meals.Count} meal types");
 
         return flights?.Select( flightCrapInfo =>
             new FlightInfo

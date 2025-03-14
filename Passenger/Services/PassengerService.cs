@@ -9,10 +9,12 @@ public class PassengerService : IPassengerService
     private List<PassengerFlightManager> _flightManagers;
     private IFlightRefreshService _flightRefreshService;
     private IServiceProvider _serviceProvider;
-    public PassengerService(IFlightRefreshService flightRefreshService, IServiceProvider serviceProvider)
+    private ILogger<PassengerService> _logger;
+    public PassengerService(IFlightRefreshService flightRefreshService, IServiceProvider serviceProvider, ILogger<PassengerService> logger)
     {
         _serviceProvider = serviceProvider;
         _flightRefreshService = flightRefreshService;
+        _logger = logger;
         _flightManagers = new(5);
     }
     public async Task ExecutePassengerActions()
@@ -31,6 +33,8 @@ public class PassengerService : IPassengerService
     {
         var availableFlights = await _flightRefreshService.GetAvailableFlights();
         
+        _logger.LogInformation($"Refreshed flights");
+
         var existingFlights = _flightManagers.AsEnumerable().Select(fm => fm._flightInfo);
 
         var flightsToInit = availableFlights.Except(existingFlights, new FlightIdComparer());
@@ -45,6 +49,7 @@ public class PassengerService : IPassengerService
 
                 var flightManager = new PassengerFlightManager(strategy, factory, flightInfo);
                 _flightManagers.Add(flightManager);
+                _logger.LogInformation($"Initialised new flight with id ${flightInfo.FlightId}");
             }
         }
     }
