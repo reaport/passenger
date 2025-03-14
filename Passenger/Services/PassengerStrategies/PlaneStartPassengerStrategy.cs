@@ -3,12 +3,12 @@ namespace Passenger.Services;
 public class PlaneStartPassengerStrategy : IPassengerStrategy
 {
     private readonly Queue<Func<Models.Passenger, Task<bool>>> _passengerSteps;
-    public Guid FlightId { get; set; }
+    private string _flightId;
     public const int MaxRetries = 3;
 
-    public PlaneStartPassengerStrategy(Guid flightId)
+    public PlaneStartPassengerStrategy(string flightId)
     {
-        FlightId = flightId;
+        _flightId = flightId;
 
         _passengerSteps = new(1);
 
@@ -35,5 +35,15 @@ public class PlaneStartPassengerStrategy : IPassengerStrategy
                 await Task.Delay(1000); // Retry delay
             }
         }
+    }
+
+    public void SetFlightId(string flightId)
+    {
+        _flightId = flightId;
+    }
+
+    public string GetFlightId()
+    {
+        return _flightId;
     }
 }
