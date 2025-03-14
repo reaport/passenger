@@ -16,6 +16,8 @@ public class PassengerService : IPassengerService
         _flightRefreshService = flightRefreshService;
         _logger = logger;
         _flightManagers = new(5);
+
+        PassengerFlightManager.OnDeadFlight += HandleFlightDeath;
     }
     public async Task ExecutePassengerActions()
     {
@@ -64,5 +66,11 @@ public class PassengerService : IPassengerService
                 _logger.LogInformation($"Initialised new flight with id {flightInfo.FlightId}");
             }
         }
+    }
+
+    private void HandleFlightDeath(PassengerFlightManager manager)
+    {
+        _flightManagers.Remove(manager);
+        _logger.LogInformation($"No more people left for the flight with ID{manager._flightInfo.FlightId}, cleaning up...");
     }
 }

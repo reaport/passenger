@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.SignalR;
 using Passenger.Infrastructure.DTO;
 using Passenger.Infrastructure.DTO.HUETA;
 using Passenger.Services;
@@ -60,7 +59,7 @@ public class Passenger
     public async Task<bool> BuyTicket(string flightId)
     {
         MealChoice = MealChoicesBecauseImDumb[_random.Next(MealChoicesBecauseImDumb.Count)];
-        
+
         var request = new BuyTicketRequest{
             PassengerId = PassengerId.ToString(),
             FlightId = flightId.ToString(),

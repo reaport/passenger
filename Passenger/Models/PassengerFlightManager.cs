@@ -10,7 +10,7 @@ public class PassengerFlightManager
     private IPassengerStrategy _passengerStrategy;
     private IPassengerFactory _factory;
     public FlightInfo _flightInfo;
-
+    public static event Action<PassengerFlightManager>? OnDeadFlight;
     public PassengerFlightManager(IPassengerStrategy strategy, IPassengerFactory factory, FlightInfo flightInfo)
     {
         _passengers = [];
@@ -26,6 +26,7 @@ public class PassengerFlightManager
     private void HandlePassengerDeath(Passenger passenger)
     {
         _passengers = new ConcurrentBag<Passenger>(_passengers.Where(p => p != passenger));
+        if(!_passengers.Any()) OnDeadFlight?.Invoke(this);
     }
 
     public Task PopulatePassengerBag(int plebCount, int vipCount, IEnumerable<string> mealPref)
