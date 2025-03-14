@@ -19,6 +19,13 @@ public class PassengerService : IPassengerService
     }
     public async Task ExecutePassengerActions()
     {
+        if(!_flightManagers.Any())
+        {
+            _logger.LogInformation($"No flights present, no actions to execute");
+            await Task.Delay(10000);
+            return;
+        }
+
         var taskList = new List<Task>(_flightManagers.Count);
 
         foreach (var flight in _flightManagers)
