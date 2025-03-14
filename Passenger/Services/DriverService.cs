@@ -42,7 +42,7 @@ public class DriverService : IDriverService
         while(await timer.WaitForNextTickAsync() && !cancellationToken.IsCancellationRequested)
         {
             await _passengerService.ExecutePassengerActions();
-            _logger.LogInformation($"Executed passenger's bullshit.");
+            _logger.LogDebug($"Executed passenger's bullshit.");
         }
     }
 
