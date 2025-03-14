@@ -33,14 +33,13 @@ public class PassengerService : IPassengerService
         
         var existingFlights = _flightManagers.AsEnumerable().Select(fm => fm._flightInfo);
 
-        // if(availableFlights is null || existingFlights is null) throw new Exception();
-
         var flightsToInit = availableFlights.Except(existingFlights, new FlightIdComparer());
 
         if(flightsToInit.Any())
         {
             foreach (var flightInfo in flightsToInit)
             {
+                // This could and should be a separate factory tbh
                 var strategy = _serviceProvider.GetRequiredService<IPassengerStrategy>();
                 var factory = _serviceProvider.GetRequiredService<IPassengerFactory>();
 
@@ -48,6 +47,5 @@ public class PassengerService : IPassengerService
                 _flightManagers.Add(flightManager);
             }
         }
-        
     }
 }

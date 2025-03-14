@@ -1,5 +1,6 @@
 using Passenger.Infrastructure;
 using Passenger.Infrastructure.DTO;
+using Passenger.Infrastructure.DTO.HUETA;
 
 namespace Passenger.Services;
 
@@ -12,7 +13,7 @@ public class PassengerInteractionService : IPassengerInteractionService
         _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
-    public async Task<ApiResponse<TicketPurchaseResponse>> BuyTicketAsync(TicketPurchaseRequest request)
+    public async Task<ApiResponse<TicketPurchaseResponse>> BuyTicketAsync(BuyTicketRequest request)
     {
         var httpClient = _httpClientFactory.CreateClient("tickets");
         var response = await httpClient.PostAsJsonAsync("buy", request);

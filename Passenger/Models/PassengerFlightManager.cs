@@ -19,6 +19,13 @@ public class PassengerFlightManager
         _flightInfo = flightInfo;
 
         PopulatePassengerBag(_flightInfo.EconomySeats, _flightInfo.VIPSeats, flightInfo.AvailableMealTypes);
+        
+        Passenger.OnPassengerDied += HandlePassengerDeath;
+    }
+
+    private void HandlePassengerDeath(Passenger passenger)
+    {
+        _passengers = new ConcurrentBag<Passenger>(_passengers.Where(p => p != passenger));
     }
 
     public Task PopulatePassengerBag(int plebCount, int vipCount, IEnumerable<string> mealPref)
@@ -27,12 +34,12 @@ public class PassengerFlightManager
 
         for(int i = 0; i < plebCount; i++)
         {
-            _passengers.Add(_factory.Create(mealPref, 10.43f, PassengerClass.Economy));
+            _passengers.Add(_factory.Create(mealPref, 10.43f, PassengerClass.economy));
         }
 
         for(int i = 0; i< vipCount; i++)
         {
-            _passengers.Add(_factory.Create(mealPref, 999.0f, PassengerClass.Business));
+            _passengers.Add(_factory.Create(mealPref, 999.0f, PassengerClass.business));
         }
 
         return Task.CompletedTask;
@@ -47,6 +54,10 @@ public class PassengerFlightManager
         );
 
         await Task.WhenAll(result);
+    }
 
+    ~PassengerFlightManager()
+    {
+        Passenger.OnPassengerDied -= HandlePassengerDeath;
     }
 }

@@ -5,8 +5,9 @@ namespace Passenger.Services;
 
 public class AirportStartPassengerStrategy : IPassengerStrategy
 {
-    private readonly Queue<Func<Models.Passenger, Task>> _passengerSteps;
+    private readonly Queue<Func<Models.Passenger, Task<bool>>> _passengerSteps;
     public Guid FlightId { get; set; }
+    private const int MaxRetries = 3;
     public AirportStartPassengerStrategy(Guid flightId)
     {
         FlightId = flightId;
@@ -21,10 +22,23 @@ public class AirportStartPassengerStrategy : IPassengerStrategy
     }
     public async Task ExecutePassengerAction(Models.Passenger passenger)
     {
-        if(_passengerSteps.Count > 0)
+        if (_passengerSteps.Count > 0)
         {
-            var currentStep = _passengerSteps.Dequeue();
-            await currentStep(passenger);
+            var currentStep = _passengerSteps.Peek();
+            int attempt = 0;
+
+            while (attempt < MaxRetries)
+            {
+                bool success = await currentStep(passenger);
+                if (success)
+                {
+                    _passengerSteps.Dequeue(); // Remove step only if successful
+                    return;
+                }
+                
+                attempt++;
+                await Task.Delay(1000); // Retry delay
+            }
         }
     }
 }
