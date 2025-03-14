@@ -57,21 +57,21 @@ public class Program
             "board",
             client =>
             {
-                client.BaseAddress = new Uri("https://flight-board.rea.ru/");
+                client.BaseAddress = new Uri("https://flight-board.reaport.ru/");
             });
 
         builder.Services.AddHttpClient(
             "tickets",
             client =>
             {
-                client.BaseAddress = new Uri("https://tickets.rea.ru/");
+                client.BaseAddress = new Uri("https://tickets.reaport.ru/");
             });
 
         builder.Services.AddHttpClient(
             "register",
             client =>
             {
-                client.BaseAddress = new Uri("https://register.rea.ru/");
+                client.BaseAddress = new Uri("https://register.reaport.ru/");
             });
         
         #endregion
