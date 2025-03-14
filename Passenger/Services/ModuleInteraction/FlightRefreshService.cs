@@ -56,16 +56,18 @@ public class FlightRefreshService : IFlightRefreshService
 
         _logger.LogInformation($"Received {meals.Count} meal types");
 
-        return flights?.Select( flightCrapInfo =>
+        var infos  = flights?.Select( flightCrapInfo =>
             new FlightInfo
             {
-                FlightId = new Guid(flightCrapInfo.FlightId!),
+                FlightId = flightCrapInfo.FlightId!,
                 EconomySeats = flightCrapInfo.AvailableSeats!["economy"],
                 VIPSeats = flightCrapInfo.AvailableSeats["business"],
                 AvailableMealTypes = meals
             }
         ) 
         ?? [];
+
+        return infos;
 
     }
 

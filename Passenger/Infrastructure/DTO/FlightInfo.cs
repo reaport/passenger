@@ -2,7 +2,7 @@ namespace Passenger.Infrastructure.DTO;
 
 public class FlightInfo
 {
-    public Guid FlightId {get;set;}
+    public required string FlightId {get;set;}
     public int EconomySeats {get;set;}
     public int VIPSeats {get;set;}
     public required IEnumerable<string> AvailableMealTypes {get;set;}
