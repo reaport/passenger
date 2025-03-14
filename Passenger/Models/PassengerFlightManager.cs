@@ -28,7 +28,10 @@ public class PassengerFlightManager
         _passengers = new ConcurrentBag<Passenger>(_passengers.Where(p => p != passenger));
         if(!_passengers.Any()) OnDeadFlight?.Invoke(this);
     }
-
+    public int GetPassengerCount()
+    {
+        return _passengers.Count();
+    }
     public Task PopulatePassengerBag(int plebCount, int vipCount, IEnumerable<string> mealPref)
     {
         //TODO implement proper baggage gen

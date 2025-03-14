@@ -20,4 +20,17 @@ public class FlightController : ControllerBase
 
         return Ok(managers.Select(manager => manager._flightInfo));
     }
+
+    [HttpGet("passengerCount")]
+    public ActionResult<List<PassengersPerFlight>> GetPassengersPerFlight()
+    {
+        var managers = _passengerService.GetFlightManagers();
+
+        var items = managers.Select( manager => new PassengersPerFlight {
+            FlightId = manager._flightInfo.FlightId,
+            PassengerCount = manager.GetPassengerCount()
+        } );
+
+        return Ok(items);
+    }
 }
