@@ -12,10 +12,17 @@ public class Program
         // Add services to the container.
 
         builder.Services.AddControllers();
-        builder.Services.AddHostedService<DriverService>();
         builder.Services.AddSingleton<IPassengerService, PassengerService>();
         builder.Services.AddSingleton<IFlightRefreshService, FlightRefreshService>();
         builder.Services.AddSingleton<IPassengerInteractionService, PassengerInteractionService>();
+
+        #region Background service hacks
+
+        builder.Services.AddSingleton<DriverService>();
+        builder.Services.AddSingleton<IDriverService>(provider => provider.GetRequiredService<DriverService>());        
+        builder.Services.AddHostedService<DriverService>(provider => provider.GetRequiredService<DriverService>());
+
+        #endregion
 
         #region Keyed service registration
         //builder.Services.AddKeyedScoped<IPassengerStrategy, AirportStartPassengerStrategy>("Airport");
