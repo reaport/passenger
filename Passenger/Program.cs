@@ -1,3 +1,4 @@
+using Passenger.Models;
 using Passenger.Services;
 
 namespace Passenger;
@@ -15,7 +16,38 @@ public class Program
         builder.Services.AddSingleton<IPassengerService, PassengerService>();
         builder.Services.AddSingleton<IFlightRefreshService, FlightRefreshService>();
         builder.Services.AddSingleton<IPassengerInteractionService, PassengerInteractionService>();
-        
+
+        #region Keyed service registration
+        builder.Services.AddSingleton<Func<string, IPassengerStrategy>>(serviceProvider => key =>
+        {
+            // Return the correct strategy based on the key
+            switch (key)
+            {
+                case "Airport":
+                    return serviceProvider.GetRequiredService<AirportStartPassengerStrategy>();
+                case "Plane":
+                    return serviceProvider.GetRequiredService<PlaneStartPassengerStrategy>();
+                default:
+                    throw new ArgumentException("Unknown passenger strategy key");
+            }
+        });
+
+        builder.Services.AddSingleton<Func<string, IPassengerFactory>>(serviceProvider => key =>
+        {
+            // Return the correct factory based on the key
+            switch (key)
+            {
+                case "Airport":
+                    return serviceProvider.GetRequiredService<AirportStartPassengerFactory>();
+                case "Plane":
+                    return serviceProvider.GetRequiredService<PlaneStartPassengerFactory>();
+                default:
+                    throw new ArgumentException("Unknown passenger factory key");
+            }
+        });
+
+        #endregion
+
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

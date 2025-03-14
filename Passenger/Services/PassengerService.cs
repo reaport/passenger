@@ -40,8 +40,8 @@ public class PassengerService : IPassengerService
             foreach (var flightInfo in flightsToInit)
             {
                 // This could and should be a separate factory tbh
-                var strategy = _serviceProvider.GetRequiredService<IPassengerStrategy>();
-                var factory = _serviceProvider.GetRequiredService<IPassengerFactory>();
+                var strategy = _serviceProvider.GetRequiredService<Func<string, IPassengerStrategy>>()("Airport");
+                var factory = _serviceProvider.GetRequiredService<Func<string, IPassengerFactory>>()("Airport");
 
                 var flightManager = new PassengerFlightManager(strategy, factory, flightInfo);
                 _flightManagers.Add(flightManager);
