@@ -34,6 +34,8 @@ public class PlaneStartPassengerStrategy : IPassengerStrategy
                 attempt++;
                 await Task.Delay(1000); // Retry delay
             }
+
+            await passenger.Die();
         }
     }
 
