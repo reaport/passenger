@@ -107,10 +107,10 @@ public class Passenger
 
     public async Task<bool> AttemptBoarding()
     {
-        if(BoardingStart<=DateTime.Now)
+        if(BoardingStart>=DateTime.Now)
         {
             _logger.LogInformation($"Passenger with the ID {PassengerId} is waiting to board their plane");
-            await Task.Delay(DateTime.Now-BoardingStart-TimeSpan.FromSeconds(1));
+            await Task.Delay(BoardingStart - DateTime.Now-TimeSpan.FromSeconds(1));
         }
 
         Status = PassengerStatus.InTransit;
@@ -122,7 +122,6 @@ public class Passenger
     {
         
         OnPassengerDied?.Invoke(this);
-
         Status = PassengerStatus.LeavingAirport;
         return true;
     }
