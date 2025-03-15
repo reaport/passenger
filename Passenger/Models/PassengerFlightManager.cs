@@ -43,7 +43,7 @@ public class PassengerFlightManager
 
         for(int i = 0; i< vipCount; i++)
         {
-            _passengers.Add(_factory.Create(mealPref, 999.0f, PassengerClass.business));
+            _passengers.Add(_factory.Create(mealPref, 27.0f, PassengerClass.business));
         }
 
         return Task.CompletedTask;
