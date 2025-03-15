@@ -12,6 +12,7 @@ public class Program
         // Add services to the container.
 
         builder.Services.AddControllers();
+        builder.Services.AddControllersWithViews();
         builder.Services.AddSingleton<IPassengerService, PassengerService>();
         builder.Services.AddSingleton<IFlightRefreshService, FlightRefreshService>();
         builder.Services.AddSingleton<IPassengerInteractionService, PassengerInteractionService>();
@@ -65,6 +66,7 @@ public class Program
         // Configure the HTTP request pipeline.
         //if (app.Environment.IsDevelopment())
         //{
+        app.UseDeveloperExceptionPage();
         app.UseSwagger();
         app.UseSwaggerUI();
         //}
@@ -73,7 +75,9 @@ public class Program
 
         app.UseAuthorization();
         app.MapControllers();
-
+        app.MapControllerRoute(
+            name: "default",
+            pattern: "{controller=Home}/{action=Index}/{id?}");
         app.Run();
     }
 }

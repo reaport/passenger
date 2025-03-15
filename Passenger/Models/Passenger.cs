@@ -120,7 +120,6 @@ public class Passenger
     public static event Action<Passenger>? OnPassengerDied;
     public async Task<bool> Die()
     {
-        
         OnPassengerDied?.Invoke(this);
         Status = PassengerStatus.LeavingAirport;
         return true;
