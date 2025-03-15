@@ -16,6 +16,7 @@ public class Program
         builder.Services.AddSingleton<IPassengerService, PassengerService>();
         builder.Services.AddSingleton<IFlightRefreshService, FlightRefreshService>();
         builder.Services.AddSingleton<IPassengerInteractionService, PassengerInteractionService>();
+        builder.Services.AddSingleton<ILoggingService, LoggingService>();
 
         #region Background service hacks
 
