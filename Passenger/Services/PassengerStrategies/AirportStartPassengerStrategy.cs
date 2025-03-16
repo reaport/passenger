@@ -1,4 +1,5 @@
 
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Passenger.Infrastructure.DTO;
 using Passenger.Models;
 
@@ -26,6 +27,9 @@ public class AirportStartPassengerStrategy : IPassengerStrategy
         if (_passengerSteps.Count > 0)
         {
             var currentStep = _passengerSteps.Peek();
+
+            if(currentStep == null) return;
+            
             int attempt = 0;
 
             while (attempt < MaxRetries)

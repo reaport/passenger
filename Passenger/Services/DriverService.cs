@@ -8,6 +8,7 @@ public class DriverService : IDriverService, IDisposable
     private readonly ILoggingService _logger;
     private readonly IPassengerService _passengerService;
     private bool _isPaused = false;
+    private Mutex _mutex = new();
     public PeriodicTimer _flightRefreshTimer;
     public PeriodicTimer _passengerActionsTimer;
 
@@ -34,6 +35,7 @@ public class DriverService : IDriverService, IDisposable
     {
         while (await timer.WaitForNextTickAsync(cancellationToken) && !cancellationToken.IsCancellationRequested)
         {
+            if(_isPaused) continue;
             try
             {
                 await _passengerService.RefreshAndInitFlights();
@@ -50,10 +52,12 @@ public class DriverService : IDriverService, IDisposable
     {
         while (await timer.WaitForNextTickAsync(cancellationToken) && !cancellationToken.IsCancellationRequested)
         {
+            if(_isPaused) continue;
             _logger.Log<DriverService>(LogLevel.Debug, $"ExecutePassengerBullshitTimerFired");
             try
             {
                 await _passengerService.ExecutePassengerActions();
+                _logger.Log<DriverService>(LogLevel.Information, $"Executed passenger actions");
             }
             catch (Exception e)
             {
@@ -70,12 +74,16 @@ public class DriverService : IDriverService, IDisposable
 
     public void Pause()
     {
+        _mutex.WaitOne();
         _isPaused = true;
+        _mutex.ReleaseMutex();
     }
 
     public void Resume()
     {
+        _mutex.WaitOne();
         _isPaused = false;
+        _mutex.ReleaseMutex();
     }
 
     public void Dispose()
