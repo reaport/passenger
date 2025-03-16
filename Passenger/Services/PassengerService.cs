@@ -7,14 +7,14 @@ namespace Passenger.Services
     public class PassengerService : IPassengerService
     {
         private List<PassengerFlightManager> _flightManagers;
-        private IFlightRefreshService _flightRefreshService;
+        private RefreshServiceHolder _refreshServiceHolder;
         private IServiceProvider _serviceProvider;
         private ILoggingService _loggingService;
 
-        public PassengerService(IFlightRefreshService flightRefreshService, IServiceProvider serviceProvider, ILoggingService loggingService)
+        public PassengerService(RefreshServiceHolder refreshServiceHolder, IServiceProvider serviceProvider, ILoggingService loggingService)
         {
             _serviceProvider = serviceProvider;
-            _flightRefreshService = flightRefreshService;
+            _refreshServiceHolder = refreshServiceHolder;
             _loggingService = loggingService;
             _flightManagers = new(5);
 
@@ -47,7 +47,7 @@ namespace Passenger.Services
 
         public async Task RefreshAndInitFlights()
         {
-            var availableFlights = await _flightRefreshService.GetAvailableFlights();
+            var availableFlights = await _refreshServiceHolder.GetService().GetAvailableFlights();
             _loggingService.Log<PassengerService>(LogLevel.Information,"Refreshed flights");
 
             var existingFlights = _flightManagers.AsEnumerable().Select(fm => fm._flightInfo);

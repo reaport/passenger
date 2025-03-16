@@ -4,12 +4,12 @@ namespace Passenger.Models;
 
 public class PlaneStartPassengerFactory : IPassengerFactory
 {
-    public PlaneStartPassengerFactory(IPassengerInteractionService interactionService, ILoggingService logger)
+    public PlaneStartPassengerFactory(InteractionServiceHolder interactionService, ILoggingService logger)
     {
         _interactionService = interactionService;
         _passengerLogger = logger;
     }
-    public IPassengerInteractionService _interactionService;
+    public InteractionServiceHolder _interactionService;
     public ILoggingService _passengerLogger;
     public Passenger Create(IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass)
     {

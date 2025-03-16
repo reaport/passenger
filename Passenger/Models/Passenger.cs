@@ -6,27 +6,29 @@ namespace Passenger.Models;
 
 public class Passenger
 {
-    public Guid PassengerId {get; private set;}
-    public IEnumerable<string> MealPreference {get; private set;}
-    public List<string> MealChoicesBecauseImDumb {get; private set;}
-    public string MealChoice{get;private set;}
-    public float BaggageWeight {get; private set;}
-    public Guid? TicketId {get;private set; }
-    public PassengerClass PassengerClass {get; private set;}
-    public PassengerStatus Status {get; private set;}
-    public DateTime BoardingStart {get;private set;}
-    private IPassengerInteractionService _interactionService;
-    private ILoggingService _logger;
+    public Guid PassengerId { get; private set; }
+    public IEnumerable<string> MealPreference { get; private set; }
+    public List<string> MealChoicesBecauseImDumb { get; private set; }
+    public string MealChoice { get; private set; }
+    public float BaggageWeight { get; private set; }
+    public Guid? TicketId { get; private set; }
+    public PassengerClass PassengerClass { get; private set; }
+    public PassengerStatus Status { get; private set; }
+    public DateTime BoardingStart { get; private set; }
+
+    private readonly InteractionServiceHolder _interactionService;
+    private readonly ILoggingService _logger;
     private static readonly Random _random = new();
-    private Passenger(IPassengerInteractionService interactionService, ILoggingService logger)
+
+    private Passenger(InteractionServiceHolder interactionService, ILoggingService logger)
     {
         _interactionService = interactionService;
         _logger = logger;
     }
-    
-    public static Passenger CreateInAirportStartingPoint(IPassengerInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass, ILoggingService logger)
+
+    public static Passenger CreateInAirportStartingPoint(InteractionServiceHolder interactionService, IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass, ILoggingService logger)
     {
-        Passenger passenger = new Passenger(interactionService, logger)
+        return new Passenger(interactionService, logger)
         {
             PassengerId = Guid.NewGuid(),
             MealPreference = mealPref,
@@ -36,13 +38,11 @@ public class Passenger
             TicketId = null,
             Status = PassengerStatus.AwaitingTicket
         };
-
-        return passenger;
     }
 
-    public static Passenger CreateOnPlane(IPassengerInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass, ILoggingService logger)
+    public static Passenger CreateOnPlane(InteractionServiceHolder interactionService, IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass, ILoggingService logger)
     {
-        Passenger passenger = new Passenger(interactionService, logger)
+        return new Passenger(interactionService, logger)
         {
             PassengerId = Guid.NewGuid(),
             MealPreference = mealPref,
@@ -52,32 +52,37 @@ public class Passenger
             PassengerClass = passengerClass,
             Status = PassengerStatus.OnPlane
         };
-
-        return passenger;
     }
 
     public async Task<bool> BuyTicket(string flightId)
     {
         MealChoice = MealChoicesBecauseImDumb[_random.Next(MealChoicesBecauseImDumb.Count)];
 
-        var request = new BuyTicketRequest{
+        var request = new BuyTicketRequest
+        {
             PassengerId = PassengerId.ToString(),
             FlightId = flightId.ToString(),
             SeatClass = PassengerClass.ToString(),
             MealType = MealChoice,
-            Baggage = BaggageWeight>0.0f ? "да" : "нет"
+            Baggage = BaggageWeight > 0.0f ? "да" : "нет"
         };
 
-        var response = await _interactionService.BuyTicketAsync(request);
+        var service = _interactionService.GetService();
+        if (service == null)
+        {
+            _logger.Log<Passenger>(LogLevel.Error, "Interaction service is null. Cannot buy ticket.");
+            return false;
+        }
 
-        if(!response.IsSuccessful) 
+        var response = await service.BuyTicketAsync(request); 
+
+        if (!response.IsSuccessful)
         {
             _logger.Log<Passenger>(LogLevel.Warning, $"Failed to buy ticket: FlightID: {flightId}; PassengerID: {PassengerId}; Error: {response.ErrorMessage}");
             return false;
         }
-        
-        TicketId = response.Data!.TicketId;
 
+        TicketId = response.Data!.TicketId;
         Status = PassengerStatus.AwaitingRegistration;
         return true;
     }
@@ -90,32 +95,39 @@ public class Passenger
             await Task.Delay(delay);
         }
 
-        var request = new RegisterPassengerRequest{
+        var request = new RegisterPassengerRequest
+        {
             PassengerId = PassengerId,
             BaggageWeight = BaggageWeight,
             MealType = MealChoice
         };
-        
-        var response = await _interactionService.RegisterPassengerAsync(request);
 
-        if(!response.IsSuccessful) 
+        var service = _interactionService.GetService();
+        if (service == null)
+        {
+            _logger.Log<Passenger>(LogLevel.Error, "Interaction service is null. Cannot register for flight.");
+            return false;
+        }
+
+        var response = await service.RegisterPassengerAsync(request);
+
+        if (!response.IsSuccessful)
         {
             _logger.Log<Passenger>(LogLevel.Warning, $"Failed to register passenger: PassengerID: {PassengerId}; Error: {response.ErrorMessage}");
             return false;
         }
 
         BoardingStart = response.Data!.StartPlantingTime;
-
         Status = PassengerStatus.AwaitingBoarding;
         return true;
     }
 
     public async Task<bool> AttemptBoarding()
     {
-        if(BoardingStart>=DateTime.Now)
+        if (BoardingStart >= DateTime.Now)
         {
             _logger.Log<Passenger>(LogLevel.Information, $"Passenger with the ID {PassengerId} is waiting to board their plane");
-            await Task.Delay(BoardingStart - DateTime.Now-TimeSpan.FromSeconds(1));
+            await Task.Delay(BoardingStart - DateTime.Now - TimeSpan.FromSeconds(1));
         }
 
         Status = PassengerStatus.InTransit;
@@ -129,5 +141,4 @@ public class Passenger
         Status = PassengerStatus.LeavingAirport;
         return true;
     }
-
 }

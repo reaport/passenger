@@ -15,9 +15,24 @@ public class Program
         builder.Services.AddControllers();
         builder.Services.AddControllersWithViews();
         builder.Services.AddSingleton<IPassengerService, PassengerService>();
-        builder.Services.AddSingleton<IFlightRefreshService, FlightRefreshService>();
-        builder.Services.AddSingleton<IPassengerInteractionService, PassengerInteractionService>();
         builder.Services.AddSingleton<ILoggingService, LoggingService>();
+        
+        #region Keyed service registration
+        builder.Services.AddKeyedSingleton<IFlightRefreshService, FlightRefreshService>("real");
+        builder.Services.AddKeyedSingleton<IFlightRefreshService, FlightRefreshServiceFake>("fake");
+
+        builder.Services.AddKeyedSingleton<IPassengerInteractionService, PassengerInteractionService>("real");
+        builder.Services.AddKeyedSingleton<IPassengerInteractionService, PassengerInteractionServiceFake>("fake");
+
+
+        builder.Services.AddKeyedTransient<IPassengerFactory, AirportStartPassengerFactory>("Airport");
+        builder.Services.AddKeyedTransient<IPassengerFactory, PlaneStartPassengerFactory>("Plane");
+        #endregion
+
+        #region Service holder registration
+        builder.Services.AddSingleton<InteractionServiceHolder>();
+        builder.Services.AddSingleton<RefreshServiceHolder>();
+        #endregion
 
         #region Background service hacks
 
@@ -27,13 +42,7 @@ public class Program
 
         #endregion
 
-        #region Keyed service registration
-        //builder.Services.AddKeyedScoped<IPassengerStrategy, AirportStartPassengerStrategy>("Airport");
-        //builder.Services.AddKeyedScoped<IPassengerStrategy, PlaneStartPassengerStrategy>("Plane");
 
-        builder.Services.AddKeyedTransient<IPassengerFactory, AirportStartPassengerFactory>("Airport");
-        builder.Services.AddKeyedTransient<IPassengerFactory, PlaneStartPassengerFactory>("Plane");
-        #endregion
 
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
