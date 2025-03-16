@@ -25,7 +25,7 @@ namespace Passenger.Services
         {
             if (!_flightManagers.Any())
             {
-                _loggingService.Log("No flights present, no actions to execute");
+                _loggingService.Log<PassengerService>(LogLevel.Information, "No flights present, no actions to execute");
                 await Task.Delay(10000);
                 return;
             }
@@ -48,7 +48,7 @@ namespace Passenger.Services
         public async Task RefreshAndInitFlights()
         {
             var availableFlights = await _flightRefreshService.GetAvailableFlights();
-            _loggingService.Log("Refreshed flights");
+            _loggingService.Log<PassengerService>(LogLevel.Information,"Refreshed flights");
 
             var existingFlights = _flightManagers.AsEnumerable().Select(fm => fm._flightInfo);
 
@@ -64,7 +64,7 @@ namespace Passenger.Services
 
                     var flightManager = new PassengerFlightManager(strategy, factory, flightInfo);
                     _flightManagers.Add(flightManager);
-                    _loggingService.Log($"Initialised new flight with id {flightInfo.FlightId}");
+                    _loggingService.Log<PassengerService>(LogLevel.Information, $"Initialised new flight with id {flightInfo.FlightId}");
                 }
             }
         }
@@ -72,7 +72,7 @@ namespace Passenger.Services
         private void HandleFlightDeath(PassengerFlightManager manager)
         {
             _flightManagers.Remove(manager);
-            _loggingService.Log($"No more people left for the flight with ID {manager._flightInfo.FlightId}, cleaning up...");
+            _loggingService.Log<PassengerService>(LogLevel.Information, $"No more people left for the flight with ID {manager._flightInfo.FlightId}, cleaning up...");
         }
     }
 }

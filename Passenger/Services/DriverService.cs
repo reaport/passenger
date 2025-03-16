@@ -5,16 +5,14 @@ namespace Passenger.Services;
 
 public class DriverService : IDriverService, IDisposable
 {
-    private readonly ILogger<DriverService> _logger;
+    private readonly ILoggingService _logger;
     private readonly IPassengerService _passengerService;
     private readonly object _lock = new object();
     private bool _isPaused = false;
-    private CancellationTokenSource _pauseTokenSource = new CancellationTokenSource();
-
     public PeriodicTimer _flightRefreshTimer;
     public PeriodicTimer _passengerActionsTimer;
 
-    public DriverService(ILogger<DriverService> logger, IPassengerService passengerService)
+    public DriverService(ILoggingService logger, IPassengerService passengerService)
     {
         _logger = logger;
         _passengerService = passengerService;
@@ -22,7 +20,7 @@ public class DriverService : IDriverService, IDisposable
 
     public Task StartAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Background driving service started running.");
+        _logger.Log<DriverService>(LogLevel.Information, "Background driving service started running.");
 
         _flightRefreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(5));
         _passengerActionsTimer = new PeriodicTimer(TimeSpan.FromSeconds(2));
@@ -46,7 +44,7 @@ public class DriverService : IDriverService, IDisposable
             }
 
             await _passengerService.RefreshAndInitFlights();
-            _logger.LogInformation("Refreshed available flights.");
+            _logger.Log<DriverService>(LogLevel.Information, "Refreshed available flights.");
         }
     }
 
@@ -68,7 +66,7 @@ public class DriverService : IDriverService, IDisposable
 
     public Task StopAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("The passengers become motionless husks as the driver service finishes execution.");
+        _logger.Log<DriverService>(LogLevel.Information, "The passengers become motionless husks as the driver service finishes execution.");
         return Task.CompletedTask;
     }
 
