@@ -7,7 +7,6 @@ public class DriverService : IDriverService, IDisposable
 {
     private readonly ILoggingService _logger;
     private readonly IPassengerService _passengerService;
-    private readonly object _lock = new object();
     private bool _isPaused = false;
     public PeriodicTimer _flightRefreshTimer;
     public PeriodicTimer _passengerActionsTimer;
@@ -23,10 +22,10 @@ public class DriverService : IDriverService, IDisposable
         _logger.Log<DriverService>(LogLevel.Information, "Background driving service started running.");
 
         _flightRefreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(5));
-        _passengerActionsTimer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+        _passengerActionsTimer = new PeriodicTimer(TimeSpan.FromSeconds(5));
 
-        Task.Run(() => RefreshAvailableFlights(_flightRefreshTimer, stoppingToken), stoppingToken);
-        Task.Run(() => ExecutePassengerBullshit(_passengerActionsTimer, stoppingToken), stoppingToken);
+        Task.Factory.StartNew(() => RefreshAvailableFlights(_flightRefreshTimer, stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        Task.Factory.StartNew(() => ExecutePassengerBullshit(_passengerActionsTimer, stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
         return Task.CompletedTask;
     }
@@ -35,16 +34,15 @@ public class DriverService : IDriverService, IDisposable
     {
         while (await timer.WaitForNextTickAsync(cancellationToken) && !cancellationToken.IsCancellationRequested)
         {
-            lock (_lock)
+            try
             {
-                while (_isPaused)
-                {
-                    Monitor.Wait(_lock);
-                }
+                await _passengerService.RefreshAndInitFlights();
+                _logger.Log<DriverService>(LogLevel.Information, "Refreshed available flights.");
             }
-
-            await _passengerService.RefreshAndInitFlights();
-            _logger.Log<DriverService>(LogLevel.Information, "Refreshed available flights.");
+            catch(Exception e)
+            {
+                _logger.Log<DriverService>(LogLevel.Critical, $"unhandled exception in driver service: {e.Message}\n{e.StackTrace}");
+            }
         }
     }
 
@@ -52,15 +50,15 @@ public class DriverService : IDriverService, IDisposable
     {
         while (await timer.WaitForNextTickAsync(cancellationToken) && !cancellationToken.IsCancellationRequested)
         {
-            lock (_lock)
+            _logger.Log<DriverService>(LogLevel.Debug, $"ExecutePassengerBullshitTimerFired");
+            try
             {
-                while (_isPaused)
-                {
-                    Monitor.Wait(_lock);
-                }
+                await _passengerService.ExecutePassengerActions();
             }
-
-            await _passengerService.ExecutePassengerActions();
+            catch (Exception e)
+            {
+                _logger.Log<DriverService>(LogLevel.Critical, $"unhandled exception in driver service passenger bullshit: {e.Message}\n{e.StackTrace}");
+            }
         }
     }
 
@@ -72,19 +70,12 @@ public class DriverService : IDriverService, IDisposable
 
     public void Pause()
     {
-        lock (_lock)
-        {
-            _isPaused = true;
-        }
+        _isPaused = true;
     }
 
     public void Resume()
     {
-        lock (_lock)
-        {
-            _isPaused = false;
-            Monitor.PulseAll(_lock); // Notify all waiting threads to resume
-        }
+        _isPaused = false;
     }
 
     public void Dispose()

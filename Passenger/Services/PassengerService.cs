@@ -1,12 +1,14 @@
 using Passenger.Infrastructure.DTO;
 using Passenger.Models;
+using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Passenger.Services
 {
     public class PassengerService : IPassengerService
     {
-        private List<PassengerFlightManager> _flightManagers;
+        private ConcurrentBag<PassengerFlightManager> _flightManagers;
         private RefreshServiceHolder _refreshServiceHolder;
         private IServiceProvider _serviceProvider;
         private ILoggingService _loggingService;
@@ -16,7 +18,7 @@ namespace Passenger.Services
             _serviceProvider = serviceProvider;
             _refreshServiceHolder = refreshServiceHolder;
             _loggingService = loggingService;
-            _flightManagers = new(5);
+            _flightManagers = new ConcurrentBag<PassengerFlightManager>();
 
             PassengerFlightManager.OnDeadFlight += HandleFlightDeath;
         }
@@ -26,7 +28,6 @@ namespace Passenger.Services
             if (!_flightManagers.Any())
             {
                 _loggingService.Log<PassengerService>(LogLevel.Information, "No flights present, no actions to execute");
-                await Task.Delay(10000);
                 return;
             }
 
@@ -42,13 +43,12 @@ namespace Passenger.Services
 
         public List<PassengerFlightManager> GetFlightManagers()
         {
-            return _flightManagers;
+            return _flightManagers.ToList();
         }
 
         public async Task RefreshAndInitFlights()
         {
             var availableFlights = await _refreshServiceHolder.GetService().GetAvailableFlights();
-            _loggingService.Log<PassengerService>(LogLevel.Information,"Refreshed flights");
 
             var existingFlights = _flightManagers.AsEnumerable().Select(fm => fm._flightInfo);
 
@@ -71,7 +71,7 @@ namespace Passenger.Services
 
         private void HandleFlightDeath(PassengerFlightManager manager)
         {
-            _flightManagers.Remove(manager);
+            _flightManagers = [.. _flightManagers.Except(new[] { manager })];
             _loggingService.Log<PassengerService>(LogLevel.Information, $"No more people left for the flight with ID {manager._flightInfo.FlightId}, cleaning up...");
         }
     }
