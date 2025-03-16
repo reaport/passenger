@@ -59,7 +59,7 @@ namespace Passenger.Services
                 foreach (var flightInfo in flightsToInit)
                 {
                     // This could and should be a separate factory tbh
-                    var strategy = new AirportStartPassengerStrategy(flightInfo.FlightId);
+                    var strategy = new AirportStartPassengerStrategy(flightInfo);
                     var factory = _serviceProvider.GetRequiredKeyedService<IPassengerFactory>("Airport");
 
                     var flightManager = new PassengerFlightManager(strategy, factory, flightInfo);

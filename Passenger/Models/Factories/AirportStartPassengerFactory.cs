@@ -5,8 +5,8 @@ namespace Passenger.Models;
 public class AirportStartPassengerFactory : IPassengerFactory
 {
     public IPassengerInteractionService _interactionService;
-    public ILogger<Passenger> _passengerLogger;
-    public AirportStartPassengerFactory(IPassengerInteractionService interactionService, ILogger<Passenger> logger)
+    public ILoggingService _passengerLogger;
+    public AirportStartPassengerFactory(IPassengerInteractionService interactionService, ILoggingService logger)
     {
         _interactionService = interactionService;
         _passengerLogger = logger;

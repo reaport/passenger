@@ -16,15 +16,15 @@ public class Passenger
     public PassengerStatus Status {get; private set;}
     public DateTime BoardingStart {get;private set;}
     private IPassengerInteractionService _interactionService;
-    private ILogger<Passenger> _logger;
+    private ILoggingService _logger;
     private static readonly Random _random = new();
-    private Passenger(IPassengerInteractionService interactionService, ILogger<Passenger> logger)
+    private Passenger(IPassengerInteractionService interactionService, ILoggingService logger)
     {
         _interactionService = interactionService;
         _logger = logger;
     }
     
-    public static Passenger CreateInAirportStartingPoint(IPassengerInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass, ILogger<Passenger> logger)
+    public static Passenger CreateInAirportStartingPoint(IPassengerInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass, ILoggingService logger)
     {
         Passenger passenger = new Passenger(interactionService, logger)
         {
@@ -40,7 +40,7 @@ public class Passenger
         return passenger;
     }
 
-    public static Passenger CreateOnPlane(IPassengerInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass, ILogger<Passenger> logger)
+    public static Passenger CreateOnPlane(IPassengerInteractionService interactionService, IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass, ILoggingService logger)
     {
         Passenger passenger = new Passenger(interactionService, logger)
         {
@@ -72,7 +72,7 @@ public class Passenger
 
         if(!response.IsSuccessful) 
         {
-            _logger.LogWarning($"Failed to buy ticket: FlightID: {flightId}; PassengerID: {PassengerId}; Error: {response.ErrorMessage}");
+            _logger.Log<Passenger>(LogLevel.Warning, $"Failed to buy ticket: FlightID: {flightId}; PassengerID: {PassengerId}; Error: {response.ErrorMessage}");
             return false;
         }
         
@@ -82,8 +82,13 @@ public class Passenger
         return true;
     }
 
-    public async Task<bool> RegisterForFlight()
+    public async Task<bool> RegisterForFlight(DateTime registrationStart)
     {
+        TimeSpan delay = registrationStart - DateTime.UtcNow;
+        if (delay > TimeSpan.Zero)
+        {
+            await Task.Delay(delay);
+        }
 
         var request = new RegisterPassengerRequest{
             PassengerId = PassengerId,
@@ -95,7 +100,7 @@ public class Passenger
 
         if(!response.IsSuccessful) 
         {
-            _logger.LogWarning($"Failed to register passenger: PassengerID: {PassengerId}; Error: {response.ErrorMessage}");
+            _logger.Log<Passenger>(LogLevel.Warning, $"Failed to register passenger: PassengerID: {PassengerId}; Error: {response.ErrorMessage}");
             return false;
         }
 
@@ -109,7 +114,7 @@ public class Passenger
     {
         if(BoardingStart>=DateTime.Now)
         {
-            _logger.LogInformation($"Passenger with the ID {PassengerId} is waiting to board their plane");
+            _logger.Log<Passenger>(LogLevel.Information, $"Passenger with the ID {PassengerId} is waiting to board their plane");
             await Task.Delay(BoardingStart - DateTime.Now-TimeSpan.FromSeconds(1));
         }
 
