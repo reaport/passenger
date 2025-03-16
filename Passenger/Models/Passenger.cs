@@ -16,13 +16,13 @@ public class Passenger
     public PassengerStatus Status { get; private set; }
     public DateTime BoardingStart { get; private set; }
 
-    private readonly InteractionServiceHolder _interactionService;
+    private readonly InteractionServiceHolder _interactionServiceResolver;
     private readonly ILoggingService _logger;
     private static readonly Random _random = new();
 
-    private Passenger(InteractionServiceHolder interactionService, ILoggingService logger)
+    private Passenger(InteractionServiceHolder interactionServiceResolver, ILoggingService logger)
     {
-        _interactionService = interactionService;
+        _interactionServiceResolver = interactionServiceResolver;
         _logger = logger;
     }
 
@@ -67,7 +67,7 @@ public class Passenger
             Baggage = BaggageWeight > 0.0f ? "да" : "нет"
         };
 
-        var service = _interactionService.GetService();
+        var service = _interactionServiceResolver.GetService();
         if (service == null)
         {
             _logger.Log<Passenger>(LogLevel.Error, "Interaction service is null. Cannot buy ticket.");
@@ -102,7 +102,7 @@ public class Passenger
             MealType = MealChoice
         };
 
-        var service = _interactionService.GetService();
+        var service = _interactionServiceResolver.GetService();
         if (service == null)
         {
             _logger.Log<Passenger>(LogLevel.Error, "Interaction service is null. Cannot register for flight.");
