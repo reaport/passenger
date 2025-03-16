@@ -8,11 +8,37 @@ public class PassengerInteractionServiceFake : IPassengerInteractionService
 {
     public Task<ApiResponse<TicketPurchaseResponse>> BuyTicketAsync(BuyTicketRequest request)
     {
-        throw new NotImplementedException();
+        var result = new ApiResponse<TicketPurchaseResponse>()
+        {
+            Data = new TicketPurchaseResponse
+            {
+                TicketId = Guid.NewGuid(),
+                Direction = "asdaf",
+                DepartureTime = DateTime.Now + TimeSpan.FromSeconds(400),
+                Status = "asdafg"
+            },
+            IsSuccessful = true,
+            ErrorMessage = null
+        };
+
+        return Task.FromResult(result);
     }
 
     public Task<ApiResponse<RegisterPassengerResponse>> RegisterPassengerAsync(RegisterPassengerRequest request)
     {
-        throw new NotImplementedException();
+        var result = new ApiResponse<RegisterPassengerResponse>()
+        {
+            Data = new RegisterPassengerResponse
+            {
+                FlightName = Guid.NewGuid(),
+                DepartureTime = DateTime.Now + TimeSpan.FromSeconds(400),
+                StartPlantingTime = DateTime.Now + TimeSpan.FromSeconds(20),
+                Seat = "ABC2345"
+            },
+            IsSuccessful = true,
+            ErrorMessage = null
+        };
+
+        return Task.FromResult(result);
     }
 }

@@ -43,6 +43,10 @@
         <a href="@Url.Action("PauseDriverService")" class="button">Pause Driver Service</a>
         <a href="@Url.Action("ResumeDriverService")" class="button">Resume Driver Service</a>
 
+        <h2>Data configuration</h2>
+        <a href="@Url.Action("UseFakeData")" class="button">Use fake data</a>
+        <a href="@Url.Action("UseRealData")" class="button">Use real data</a>
+
         <div class="result-box">
             <h3>Result:</h3>
             @if (ViewBag.Message != null)

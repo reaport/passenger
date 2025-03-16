@@ -9,11 +9,15 @@ namespace Passenger.Controllers
         private readonly FlightController _flightController;
         private readonly DriverController _driverController;
         private readonly ILoggingService _loggingService;
+        private RefreshServiceHolder _refreshServiceHolder;
+        private InteractionServiceHolder _interactionServiceHolder;
 
-        public HomeController(IPassengerService passengerService, IDriverService driverService, ILoggingService loggingService, ILogger<DriverController> driverLogger)
+        public HomeController(IPassengerService passengerService, IDriverService driverService, ILoggingService loggingService, ILogger<DriverController> driverLogger, InteractionServiceHolder interactionServiceHolder, RefreshServiceHolder refreshServiceHolder)
         {
             _flightController = new FlightController(passengerService);
             _driverController = new DriverController(driverService, driverLogger);
+            _refreshServiceHolder = refreshServiceHolder;
+            _interactionServiceHolder = interactionServiceHolder;
             _loggingService = loggingService;
         }
 
@@ -68,6 +72,41 @@ namespace Passenger.Controllers
             var result = _driverController.ResumeDriverService() as OkObjectResult;
             ViewBag.Message = result?.Value?.ToString();
 
+            return View("Index");
+        }
+
+        public IActionResult UseFakeData()
+        {
+            try
+            {
+                _refreshServiceHolder.SetService("fake");
+                _interactionServiceHolder.SetService("fake");
+                ViewBag.Message = $"Set fake data";
+            }
+            catch (Exception e)
+            {
+                _loggingService.Log<HomeController>(LogLevel.Information, $"Successfully switched to fake data");
+                ViewBag.Message = $"Failed to set fake data";
+                throw;
+            }
+            return View("Index");
+        }
+
+        public IActionResult UseRealData()
+        {
+            try
+            {
+                _refreshServiceHolder.SetService("real");
+                _interactionServiceHolder.SetService("real");
+                _loggingService.Log<HomeController>(LogLevel.Information, $"Successfully switched to real data");
+                ViewBag.Message = $"Set real data";
+            }
+            catch (Exception e)
+            {
+                _loggingService.Log<HomeController>(LogLevel.Error, $"Failed to switch to real data");
+                ViewBag.Message = $"Failed to set real data";
+                throw;
+            }
             return View("Index");
         }
     }
