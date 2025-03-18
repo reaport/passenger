@@ -27,7 +27,7 @@ public class PassengerFlightManager
     private void HandlePassengerDeath(Passenger passenger)
     {
         _passengers = new ConcurrentBag<Passenger>(_passengers.Where(p => p != passenger));
-        if(!_passengers.Any()) OnDeadFlight?.Invoke(this);
+        if(_passengers.IsEmpty) OnDeadFlight?.Invoke(this);
     }
     public int GetPassengerCount()
     {
