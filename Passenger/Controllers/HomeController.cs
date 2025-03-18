@@ -26,7 +26,11 @@ namespace Passenger.Controllers
             _refreshServiceHolder = refreshServiceHolder;
             _interactionServiceHolder = interactionServiceHolder;
         }
-
+        public IActionResult GetLogs()
+        {
+            var logs = _loggingService.GetLogs();
+            return Json(logs); 
+        }
         public IActionResult Index()
         {
             ViewBag.Logs = _loggingService.GetLogs();
