@@ -61,7 +61,7 @@ public class Passenger
         {
             PassengerId = PassengerId.ToString(),
             FlightId = flightId.ToString(),
-            SeatClass = PassengerClass.ToString(),
+            SeatClass = char.ToUpper(PassengerClass.ToString()[0]) + PassengerClass.ToString().Substring(1),
             MealType = MealChoice,
             Baggage = BaggageWeight > 0.0f ? "да" : "нет"
         };
