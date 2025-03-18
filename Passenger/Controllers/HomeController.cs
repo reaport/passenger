@@ -52,6 +52,14 @@ namespace Passenger.Controllers
             return View("Index", flights);
         }
 
+        public IActionResult CleanupFlights()
+        {
+            _passengerService.CleanupFlights();
+            ViewBag.Message("Cleaned up initialised flights");
+            _loggingService.Log<HomeController>(LogLevel.Information, $"Deleted all internal initialised flights");
+            return View("Index");
+        }
+
         public IActionResult GetPassengersPerFlight()
         {
             var managers = _passengerService.GetFlightManagers();
