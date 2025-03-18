@@ -10,6 +10,7 @@ namespace Passenger.Controllers
         private readonly FlightController _flightController;
         private readonly DriverController _driverController;
         private readonly ILoggingService _loggingService;
+        private IPassengerService _passengerService;
         private RefreshServiceHolder _refreshServiceHolder;
         private InteractionServiceHolder _interactionServiceHolder;
 
@@ -20,6 +21,7 @@ namespace Passenger.Controllers
             _refreshServiceHolder = refreshServiceHolder;
             _interactionServiceHolder = interactionServiceHolder;
             _loggingService = loggingService;
+            _passengerService = passengerService;
         }
 
         public IActionResult Index()
@@ -76,29 +78,36 @@ namespace Passenger.Controllers
             return View("Index");
         }
 
-        public IActionResult UseFakeData()
+        public async Task<IActionResult> UseFakeData()
         {
             try
             {
+                await _driverController.PauseDriverService();
                 _refreshServiceHolder.SetService("fake");
                 _interactionServiceHolder.SetService("fake");
+                _passengerService.CleanupFlights();
+                await _driverController.ResumeDriverService();
+                _loggingService.Log<HomeController>(LogLevel.Information, $"Successfully switched to fake data");
                 ViewBag.Message = $"Set fake data";
             }
             catch (Exception e)
             {
-                _loggingService.Log<HomeController>(LogLevel.Information, $"Successfully switched to fake data");
+                _loggingService.Log<HomeController>(LogLevel.Information, $"Failed to switch to fake data");
                 ViewBag.Message = $"Failed to set fake data";
                 throw;
             }
             return View("Index");
         }
 
-        public IActionResult UseRealData()
+        public async Task<IActionResult> UseRealDataAsync()
         {
             try
             {
+                await _driverController.PauseDriverService();
                 _refreshServiceHolder.SetService("real");
                 _interactionServiceHolder.SetService("real");
+                _passengerService.CleanupFlights();
+                await _driverController.ResumeDriverService();
                 _loggingService.Log<HomeController>(LogLevel.Information, $"Successfully switched to real data");
                 ViewBag.Message = $"Set real data";
             }
