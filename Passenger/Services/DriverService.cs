@@ -11,7 +11,6 @@ public class DriverService : IDriverService, IDisposable
     private bool _isPaused = true; // No longer volatile - protected by semaphore
     private readonly SemaphoreSlim _pauseSemaphore = new SemaphoreSlim(1, 1);
     public PeriodicTimer _refreshTimer;
-
     public DriverService(ILoggingService logger, IPassengerService passengerService)
     {
         _logger = logger;
@@ -56,7 +55,7 @@ public class DriverService : IDriverService, IDisposable
             catch (Exception e)
             {
                 _logger.Log<DriverService>(LogLevel.Critical, 
-                    $"Unhandled exception refreshing flights: {e.Message}\n{e.StackTrace}");
+                    $"Could not refresh flights: {e.Message}");
                 await Task.Delay(5000, cancellationToken); 
                 continue;
             }
