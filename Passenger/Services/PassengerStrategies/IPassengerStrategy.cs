@@ -3,5 +3,5 @@ namespace Passenger.Services;
 public interface IPassengerStrategy
 {
     //public string FlightId {get;set;}
-    public Task ExecutePassengerAction(Models.Passenger passenger);
+    public Task<bool> ExecutePassengerAction(Models.Passenger passenger);
 }

@@ -1,3 +1,4 @@
+
 namespace Passenger.Services;
 
 public class PlaneStartPassengerStrategy : IPassengerStrategy
@@ -47,5 +48,10 @@ public class PlaneStartPassengerStrategy : IPassengerStrategy
     public string GetFlightId()
     {
         return _flightId;
+    }
+
+    Task<bool> IPassengerStrategy.ExecutePassengerAction(Models.Passenger passenger)
+    {
+        throw new NotImplementedException();
     }
 }

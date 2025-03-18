@@ -12,24 +12,24 @@ public class FlightRefreshServiceFake : IFlightRefreshService
             new FlightInfo
             {
                 FlightId = Guid.NewGuid().ToString(),
-                EconomySeats = 50,
-                VIPSeats = 30,
+                EconomySeats = 5,
+                VIPSeats = 2,
                 RegistrationStartTime = DateTime.Now.AddSeconds(10),
                 AvailableMealTypes = ["Carnivorous, Balanced"]
             },
             new FlightInfo
             {
                 FlightId = Guid.NewGuid().ToString(),
-                EconomySeats = 50,
-                VIPSeats = 30,
+                EconomySeats = 10,
+                VIPSeats = 5,
                 RegistrationStartTime = DateTime.Now.AddSeconds(5),
                 AvailableMealTypes = ["Carnivorous, Balanced, Sunrays"]
             },
             new FlightInfo
             {
                 FlightId = Guid.NewGuid().ToString(),
-                EconomySeats = 50,
-                VIPSeats = 30,
+                EconomySeats = 15,
+                VIPSeats = 3,
                 RegistrationStartTime = DateTime.Now.AddSeconds(10),
                 AvailableMealTypes = ["Schizo-Juice, Vegan"]
             }

@@ -10,6 +10,7 @@ public class PassengerFlightManager
     private IPassengerStrategy _passengerStrategy;
     private IPassengerFactory _factory;
     public FlightInfo _flightInfo;
+    private readonly SemaphoreSlim _semaphore = new(1,1);
     public static event Action<PassengerFlightManager>? OnDeadFlight;
     public PassengerFlightManager(IPassengerStrategy strategy, IPassengerFactory factory, FlightInfo flightInfo)
     {
@@ -48,16 +49,34 @@ public class PassengerFlightManager
 
         return Task.CompletedTask;
     }
-    public async Task ExecutePassengerActions()
+    public async Task<bool> ExecutePassengerActions()
     {
-        var result = new List<Task>(_passengers.Count);
-        Parallel.ForEach
-        (
-            _passengers,
-            (passenger)=> result.Add(_passengerStrategy.ExecutePassengerAction(passenger))
-        );
 
-        await Task.WhenAll(result);
+        await _semaphore.WaitAsync();
+        var result = new List<Task<bool>>(_passengers.Count);
+
+        foreach (var passenger in _passengers)
+        {
+            result.Add(_passengerStrategy.ExecutePassengerAction(passenger));
+        }
+
+        _semaphore.Release();
+
+        try
+        {
+            await Task.WhenAll(result);
+            return true;
+        }
+        catch (AggregateException e)
+        {
+            System.Console.WriteLine($"Aggregate exception: {e.Message}\n{e.InnerExceptions}");
+        }
+        catch(Exception ex)
+        {   
+            System.Console.WriteLine($"Unhandled exception: {ex.Message}\n{ex.StackTrace}");
+        }
+
+        return false;
     }
 
     ~PassengerFlightManager()

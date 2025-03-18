@@ -8,7 +8,7 @@ public class InteractionServiceHolder
     public InteractionServiceHolder(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
-        _currentService = _serviceProvider.GetRequiredKeyedService<IPassengerInteractionService>("real"); // Default service
+        _currentService = _serviceProvider.GetRequiredKeyedService<IPassengerInteractionService>("fake"); // Default service
     }
 
     public IPassengerInteractionService GetService() => _currentService;

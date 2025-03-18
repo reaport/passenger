@@ -24,7 +24,6 @@ public class Program
         builder.Services.AddKeyedSingleton<IPassengerInteractionService, PassengerInteractionService>("real");
         builder.Services.AddKeyedSingleton<IPassengerInteractionService, PassengerInteractionServiceFake>("fake");
 
-
         builder.Services.AddKeyedTransient<IPassengerFactory, AirportStartPassengerFactory>("Airport");
         builder.Services.AddKeyedTransient<IPassengerFactory, PlaneStartPassengerFactory>("Plane");
         #endregion

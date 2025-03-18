@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Passenger.Infrastructure.DTO;
 using Passenger.Services;
@@ -32,7 +33,7 @@ namespace Passenger.Controllers
             var result = _flightController.GetInitialisedFlights();
             var flights = result?.Value;
 
-            if (flights == null || !flights.Any())
+            if (flights == null || flights.Count == 0)
             {
                 ViewBag.Message = "No flights available.";
             }
@@ -59,17 +60,17 @@ namespace Passenger.Controllers
             return Json(logs); 
         }
 
-        public IActionResult PauseDriverService()
+        public async Task<IActionResult> PauseDriverService()
         {
-            var result = _driverController.PauseDriverService() as OkObjectResult;
+            var result = await _driverController.PauseDriverService() as OkObjectResult;
             ViewBag.Message = result?.Value?.ToString();
 
             return View("Index");
         }
 
-        public IActionResult ResumeDriverService()
+        public async Task<IActionResult> ResumeDriverService()
         {
-            var result = _driverController.ResumeDriverService() as OkObjectResult;
+            var result = await _driverController.ResumeDriverService() as OkObjectResult;
             ViewBag.Message = result?.Value?.ToString();
 
             return View("Index");

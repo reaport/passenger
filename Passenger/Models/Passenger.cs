@@ -15,7 +15,6 @@ public class Passenger
     public PassengerClass PassengerClass { get; private set; }
     public PassengerStatus Status { get; private set; }
     public DateTime BoardingStart { get; private set; }
-
     private readonly InteractionServiceHolder _interactionServiceResolver;
     private readonly ILoggingService _logger;
     private static readonly Random _random = new();
@@ -84,6 +83,7 @@ public class Passenger
 
         TicketId = response.Data!.TicketId;
         Status = PassengerStatus.AwaitingRegistration;
+        _logger.Log<Passenger>(LogLevel.Information, $"Passenger {PassengerId} succesfully bought their ticket");
         return true;
     }
 
@@ -119,17 +119,23 @@ public class Passenger
 
         BoardingStart = response.Data!.StartPlantingTime;
         Status = PassengerStatus.AwaitingBoarding;
+        _logger.Log<Passenger>(LogLevel.Information, $"Passenger {PassengerId} succesfully registered for their flight");
         return true;
     }
 
     public async Task<bool> AttemptBoarding()
     {
-        if (BoardingStart >= DateTime.Now)
+        var now = DateTime.UtcNow; // Use UTC time
+        if (BoardingStart > now)
         {
-            _logger.Log<Passenger>(LogLevel.Information, $"Passenger with the ID {PassengerId} is waiting to board their plane");
-            await Task.Delay(BoardingStart - DateTime.Now - TimeSpan.FromSeconds(1));
+            var delay = BoardingStart - now - TimeSpan.FromSeconds(1);
+            if (delay > TimeSpan.Zero)
+            {
+                await Task.Delay(delay);
+            }
         }
 
+        _logger.Log<Passenger>(LogLevel.Information, $"Passenger {PassengerId} boarded");
         Status = PassengerStatus.InTransit;
         return true;
     }

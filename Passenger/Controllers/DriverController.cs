@@ -16,18 +16,25 @@ public class DriverController : ControllerBase
     }
 
     [HttpPost("pause")]
-    public ActionResult PauseDriverService()
+    public async Task<ActionResult> PauseDriverService()
     {
-        _driverService.Pause();
+        await _driverService.Pause();
         _logger.LogInformation("Paused the driver service");
         return Ok("Driver service paused.");
     }
 
     [HttpPost("resume")]
-    public ActionResult ResumeDriverService()
+    public async Task<ActionResult> ResumeDriverService()
     {
-        _driverService.Resume();
+        await _driverService.Resume();
         _logger.LogInformation("Resumed the driver service");
         return Ok("Driver service resumed.");
+    }
+
+    [HttpPost("clean")]
+    public async Task<ActionResult> CleanUpFlights()
+    {
+        await _driverService.CleanUpFlights();
+        return Ok("Deleted flights");
     }
 }

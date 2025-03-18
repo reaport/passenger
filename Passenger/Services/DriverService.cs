@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using System.Threading;
 
 namespace Passenger.Services;
 
@@ -7,10 +8,9 @@ public class DriverService : IDriverService, IDisposable
 {
     private readonly ILoggingService _logger;
     private readonly IPassengerService _passengerService;
-    private bool _isPaused = false;
-    private Mutex _mutex = new();
-    public PeriodicTimer _flightRefreshTimer;
-    public PeriodicTimer _passengerActionsTimer;
+    private bool _isPaused = false; // No longer volatile - protected by semaphore
+    private readonly SemaphoreSlim _pauseSemaphore = new SemaphoreSlim(1, 1);
+    public PeriodicTimer _refreshTimer;
 
     public DriverService(ILoggingService logger, IPassengerService passengerService)
     {
@@ -21,74 +21,97 @@ public class DriverService : IDriverService, IDisposable
     public Task StartAsync(CancellationToken stoppingToken)
     {
         _logger.Log<DriverService>(LogLevel.Information, "Background driving service started running.");
-
-        _flightRefreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(5));
-        _passengerActionsTimer = new PeriodicTimer(TimeSpan.FromSeconds(5));
-
-        Task.Factory.StartNew(() => RefreshAvailableFlights(_flightRefreshTimer, stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-        Task.Factory.StartNew(() => ExecutePassengerBullshit(_passengerActionsTimer, stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-
+        _refreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(3));
+        
+        // Use Task.Run instead of StartNew for clearer async intent
+        Task.Run(() => DoTimedTasks(_refreshTimer, stoppingToken), stoppingToken);
+        
         return Task.CompletedTask;
     }
 
-    private async Task RefreshAvailableFlights(PeriodicTimer timer, CancellationToken cancellationToken)
+    private async Task DoTimedTasks(PeriodicTimer timer, CancellationToken cancellationToken)
     {
         while (await timer.WaitForNextTickAsync(cancellationToken) && !cancellationToken.IsCancellationRequested)
         {
-            if(_isPaused) continue;
+            // Async-friendly synchronization
+            await _pauseSemaphore.WaitAsync(cancellationToken);
+            try
+            {
+                if (_isPaused)
+                {
+                    _logger.Log<DriverService>(LogLevel.Information, "Driver server is paused, waiting...");
+                    continue;
+                }
+            }
+            finally
+            {
+                _pauseSemaphore.Release();
+            }
+
             try
             {
                 await _passengerService.RefreshAndInitFlights();
                 _logger.Log<DriverService>(LogLevel.Information, "Refreshed available flights.");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                _logger.Log<DriverService>(LogLevel.Critical, $"unhandled exception in driver service: {e.Message}\n{e.StackTrace}");
+                _logger.Log<DriverService>(LogLevel.Critical, 
+                    $"Unhandled exception refreshing flights: {e.Message}\n{e.StackTrace}");
+                await Task.Delay(5000, cancellationToken); 
+                continue;
             }
-        }
-    }
 
-    private async Task ExecutePassengerBullshit(PeriodicTimer timer, CancellationToken cancellationToken)
-    {
-        while (await timer.WaitForNextTickAsync(cancellationToken) && !cancellationToken.IsCancellationRequested)
-        {
-            if(_isPaused) continue;
-            _logger.Log<DriverService>(LogLevel.Debug, $"ExecutePassengerBullshitTimerFired");
             try
             {
+                _logger.Log<DriverService>(LogLevel.Debug, "Trying to execute passenger actions");
                 await _passengerService.ExecutePassengerActions();
-                _logger.Log<DriverService>(LogLevel.Information, $"Executed passenger actions");
             }
             catch (Exception e)
             {
-                _logger.Log<DriverService>(LogLevel.Critical, $"unhandled exception in driver service passenger bullshit: {e.Message}\n{e.StackTrace}");
+                _logger.Log<DriverService>(LogLevel.Critical, 
+                    $"Unhandled exception executing passenger actions: {e.Message}\n{e.StackTrace}");
+                await Task.Delay(5000, cancellationToken);
             }
         }
     }
 
     public Task StopAsync(CancellationToken stoppingToken)
     {
-        _logger.Log<DriverService>(LogLevel.Information, "The passengers become motionless husks as the driver service finishes execution.");
+        _logger.Log<DriverService>(LogLevel.Information, 
+            "The passengers become motionless husks as the driver service finishes execution.");
         return Task.CompletedTask;
     }
 
-    public void Pause()
+    public async Task Pause()
     {
-        _mutex.WaitOne();
-        _isPaused = true;
-        _mutex.ReleaseMutex();
+        await _pauseSemaphore.WaitAsync();
+        try { _isPaused = true; }
+        finally { _pauseSemaphore.Release(); }
     }
 
-    public void Resume()
+    public async Task Resume()
     {
-        _mutex.WaitOne();
-        _isPaused = false;
-        _mutex.ReleaseMutex();
+        await _pauseSemaphore.WaitAsync();
+        try { _isPaused = false; }
+        finally { _pauseSemaphore.Release(); }
+    }
+
+    public async Task CleanUpFlights()
+    {
+        await Pause();
+        try
+        {
+            _passengerService.CleanupFlights();
+        }
+        finally
+        {
+            await Resume();
+        }
     }
 
     public void Dispose()
     {
-        _flightRefreshTimer?.Dispose();
-        _passengerActionsTimer?.Dispose();
+        _refreshTimer?.Dispose();
+        _pauseSemaphore?.Dispose(); // Clean up semaphore
     }
 }

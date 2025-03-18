@@ -8,7 +8,7 @@ public class RefreshServiceHolder
     public RefreshServiceHolder(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
-        _currentService = _serviceProvider.GetRequiredKeyedService<IFlightRefreshService>("real"); // Default service
+        _currentService = _serviceProvider.GetRequiredKeyedService<IFlightRefreshService>("fake"); // Default service
     }
 
     public IFlightRefreshService GetService() => _currentService;
