@@ -7,21 +7,24 @@ namespace Passenger.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly FlightController _flightController;
-        private readonly DriverController _driverController;
         private readonly ILoggingService _loggingService;
-        private IPassengerService _passengerService;
-        private RefreshServiceHolder _refreshServiceHolder;
-        private InteractionServiceHolder _interactionServiceHolder;
+        private readonly IPassengerService _passengerService;
+        private readonly IDriverService _driverService;
+        private readonly RefreshServiceHolder _refreshServiceHolder;
+        private readonly InteractionServiceHolder _interactionServiceHolder;
 
-        public HomeController(FlightController flightController, DriverController driverController, IPassengerService passengerService, IDriverService driverService, ILoggingService loggingService, ILogger<DriverController> driverLogger, InteractionServiceHolder interactionServiceHolder, RefreshServiceHolder refreshServiceHolder)
+        public HomeController(
+            IPassengerService passengerService,
+            IDriverService driverService,
+            ILoggingService loggingService,
+            RefreshServiceHolder refreshServiceHolder,
+            InteractionServiceHolder interactionServiceHolder)
         {
-            _flightController = flightController;
-            _driverController = driverController;
+            _passengerService = passengerService;
+            _driverService = driverService;
+            _loggingService = loggingService;
             _refreshServiceHolder = refreshServiceHolder;
             _interactionServiceHolder = interactionServiceHolder;
-            _loggingService = loggingService;
-            _passengerService = passengerService;
         }
 
         public IActionResult Index()
@@ -32,12 +35,14 @@ namespace Passenger.Controllers
 
         public IActionResult GetInitialisedFlights()
         {
-            var result = _flightController.GetInitialisedFlights();
-            var flights = result?.Value;
+            var managers = _passengerService.GetFlightManagers();
 
-            if (flights == null || flights.Count == 0)
+            var flights = managers.Select(manager => manager._flightInfo);
+
+            if (flights == null || !flights.Any())
             {
                 ViewBag.Message = "No flights available.";
+                return View("Index");
             }
 
             return View("Index", flights);
@@ -45,48 +50,48 @@ namespace Passenger.Controllers
 
         public IActionResult GetPassengersPerFlight()
         {
-            var result = _flightController.GetPassengersPerFlight();
-            var passengers = result?.Value;
+            var managers = _passengerService.GetFlightManagers();
 
-            if (passengers == null || !passengers.Any())
+            var items = managers.Select( manager => new PassengersPerFlight {
+                FlightId = manager._flightInfo.FlightId,
+                PassengerCount = manager.GetPassengerCount()
+            });
+
+
+            if (items == null || !items.Any())
             {
                 ViewBag.Message = "No passengers data available.";
+                return View("Index");
             }
 
-            return View("Index", passengers);
+            return View("Index", items);
         }
 
-        public IActionResult GetLogs()
-        {
-            var logs = _loggingService.GetLogs();
-            return Json(logs); 
-        }
+        // Keep existing GetLogs, PauseDriverService, ResumeDriverService, etc.
 
         public async Task<IActionResult> PauseDriverService()
         {
-            var result = await _driverController.PauseDriverService() as OkObjectResult;
-            ViewBag.Message = result?.Value?.ToString();
-
+            await _driverService.Pause(); 
+            ViewBag.Message = "Driver service paused.";
             return View("Index");
         }
 
         public async Task<IActionResult> ResumeDriverService()
         {
-            var result = await _driverController.ResumeDriverService() as OkObjectResult;
-            ViewBag.Message = result?.Value?.ToString();
-
+            await _driverService.Resume(); 
+            ViewBag.Message = "Driver service resumed.";
             return View("Index");
         }
 
-        public async Task<IActionResult> UseFakeData()
+         public async Task<IActionResult> UseFakeData()
         {
             try
             {
-                await _driverController.PauseDriverService();
+                await _driverService.Pause();
                 _refreshServiceHolder.SetService("fake");
                 _interactionServiceHolder.SetService("fake");
                 _passengerService.CleanupFlights();
-                await _driverController.ResumeDriverService();
+                await _driverService.Resume();
                 _loggingService.Log<HomeController>(LogLevel.Information, $"Successfully switched to fake data");
                 ViewBag.Message = $"Set fake data";
             }
@@ -103,11 +108,11 @@ namespace Passenger.Controllers
         {
             try
             {
-                await _driverController.PauseDriverService();
+                await _driverService.Pause();
                 _refreshServiceHolder.SetService("real");
                 _interactionServiceHolder.SetService("real");
                 _passengerService.CleanupFlights();
-                await _driverController.ResumeDriverService();
+                await _driverService.Resume();
                 _loggingService.Log<HomeController>(LogLevel.Information, $"Successfully switched to real data");
                 ViewBag.Message = $"Set real data";
             }
@@ -120,4 +125,5 @@ namespace Passenger.Controllers
             return View("Index");
         }
     }
+    
 }
