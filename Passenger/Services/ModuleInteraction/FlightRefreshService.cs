@@ -60,8 +60,8 @@ public class FlightRefreshService : IFlightRefreshService
             new FlightInfo
             {
                 FlightId = flightCrapInfo.FlightId!,
-                EconomySeats = flightCrapInfo.AvailableSeats!["economy"],
-                VIPSeats = flightCrapInfo.AvailableSeats["business"],
+                EconomySeats = flightCrapInfo.AvailableSeats!["Economy"],
+                VIPSeats = flightCrapInfo.AvailableSeats["Business"],
                 RegistrationStartTime = flightCrapInfo.RegistrationStartTime,
                 AvailableMealTypes = meals
             }
