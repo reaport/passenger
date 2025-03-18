@@ -14,10 +14,10 @@ namespace Passenger.Controllers
         private RefreshServiceHolder _refreshServiceHolder;
         private InteractionServiceHolder _interactionServiceHolder;
 
-        public HomeController(IPassengerService passengerService, IDriverService driverService, ILoggingService loggingService, ILogger<DriverController> driverLogger, InteractionServiceHolder interactionServiceHolder, RefreshServiceHolder refreshServiceHolder)
+        public HomeController(FlightController flightController, DriverController driverController, IPassengerService passengerService, IDriverService driverService, ILoggingService loggingService, ILogger<DriverController> driverLogger, InteractionServiceHolder interactionServiceHolder, RefreshServiceHolder refreshServiceHolder)
         {
-            _flightController = new FlightController(passengerService);
-            _driverController = new DriverController(driverService, driverLogger);
+            _flightController = flightController;
+            _driverController = driverController;
             _refreshServiceHolder = refreshServiceHolder;
             _interactionServiceHolder = interactionServiceHolder;
             _loggingService = loggingService;
