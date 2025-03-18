@@ -8,7 +8,7 @@ public class DriverService : IDriverService, IDisposable
 {
     private readonly ILoggingService _logger;
     private readonly IPassengerService _passengerService;
-    private bool _isPaused = false; // No longer volatile - protected by semaphore
+    private bool _isPaused = true; // No longer volatile - protected by semaphore
     private readonly SemaphoreSlim _pauseSemaphore = new SemaphoreSlim(1, 1);
     public PeriodicTimer _refreshTimer;
 
