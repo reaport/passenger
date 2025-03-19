@@ -1,4 +1,5 @@
 
+using System.Collections.Concurrent;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Passenger.Infrastructure.DTO;
 using Passenger.Models;
@@ -7,7 +8,7 @@ namespace Passenger.Services;
 
 public class AirportStartPassengerStrategy : IPassengerStrategy
 {
-    private readonly Queue<Func<Models.Passenger, Task<bool>>> _passengerSteps;
+    private readonly ConcurrentQueue<Func<Models.Passenger, Task<bool>>> _passengerSteps;
     private FlightInfo _flightInfo;
     private ILoggingService _logger;
     private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
@@ -17,7 +18,7 @@ public class AirportStartPassengerStrategy : IPassengerStrategy
         _flightInfo = flightInfo;
         _logger = logger;
 
-        _passengerSteps = new(4);
+        _passengerSteps = new();
 
         _passengerSteps.Enqueue( async p =>
         {
@@ -45,39 +46,27 @@ public class AirportStartPassengerStrategy : IPassengerStrategy
         
     }
     public async Task<bool> ExecutePassengerAction(Models.Passenger passenger)
-{
-    await _semaphore.WaitAsync();
-    try
-    {
-        if (_passengerSteps.Count == 0) return false;
-        var currentStep = _passengerSteps.Peek();
+    {        
+        var res = _passengerSteps.TryDequeue(out var currentStep);
+
+        if(!res || currentStep == null) return false;
 
         for (int attempt = 0; attempt < MaxRetries; attempt++)
         {
             try
             {
                 bool success = await currentStep(passenger);
-                if (success)
-                {
-                    _passengerSteps.Dequeue();
-                    return true;
-                }
+                return success;
             }
             catch (Exception ex)
             {
                 _logger.Log<AirportStartPassengerStrategy>(LogLevel.Error, $"Step failed (attempt {attempt + 1}): {ex.Message}");
             }
-            
-            await Task.Delay(1000);
+
+            await Task.Delay(5000);
         }
         
         _logger.Log<AirportStartPassengerStrategy>(LogLevel.Warning, $"Passenger {passenger.PassengerId} failed all retries");
         return await passenger.Die();
     }
-    finally
-    {
-        _semaphore.Release();
-    }
-}
-
 }

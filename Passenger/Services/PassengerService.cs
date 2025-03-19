@@ -50,7 +50,7 @@ namespace Passenger.Services
                 return;
             }
 
-            //await _semaphore.WaitAsync();
+            await _semaphore.WaitAsync();
             var result = new List<Task>();
             try
             {
@@ -65,7 +65,7 @@ namespace Passenger.Services
             }
             finally
             {
-                //_semaphore.Release();
+                _semaphore.Release();
             }
 
             await Task.WhenAll(result);
