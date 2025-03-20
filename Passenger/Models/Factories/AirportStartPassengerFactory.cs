@@ -1,3 +1,4 @@
+using Passenger.Infrastructure.DTO;
 using Passenger.Services;
 
 namespace Passenger.Models;
@@ -5,15 +6,15 @@ namespace Passenger.Models;
 public class AirportStartPassengerFactory : IPassengerFactory
 {
     public InteractionServiceHolder _interactionService;
-    public ILoggingService _passengerLogger;
+    public ILoggingService _loggingService;
     public AirportStartPassengerFactory(InteractionServiceHolder interactionService, ILoggingService logger)
     {
         _interactionService = interactionService;
-        _passengerLogger = logger;
+        _loggingService = logger;
     }
-    public Passenger Create(IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass)
+    public Passenger Create(InteractionServiceHolder serviceHolder, float baggageWeight, string passengerClass, FlightInfo flightInfo)
     {
-        return Passenger.CreateInAirportStartingPoint(_interactionService, mealPref, baggageWeight, passengerClass, _passengerLogger);
+        return Passenger.CreateInAirportStartingPoint(new AirportStartPassengerStrategy(flightInfo), serviceHolder, baggageWeight, passengerClass, _loggingService, flightInfo);
     }
 
 }

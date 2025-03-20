@@ -6,6 +6,5 @@ public class TicketCrapFlightInfo
     public string? Direction { get; set; }
     public DateTime DepartureTime { get; set; }
     public DateTime RegistrationStartTime { get; set; }
-    // Доступные места по классам (economy, business)
     public Dictionary<string, int>? AvailableSeats { get; set; }
 }

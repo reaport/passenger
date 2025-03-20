@@ -1,4 +1,5 @@
 
+
 namespace Passenger.Services;
 
 public class PlaneStartPassengerStrategy : IPassengerStrategy
@@ -49,8 +50,13 @@ public class PlaneStartPassengerStrategy : IPassengerStrategy
     {
         return _flightId;
     }
+    
+    public bool TryRetreiveNextPassengerStep(out Func<Models.Passenger, Task<bool>> step)
+    {
+        throw new NotImplementedException();
+    }
 
-    Task<bool> IPassengerStrategy.ExecutePassengerAction(Models.Passenger passenger)
+    public object Clone()
     {
         throw new NotImplementedException();
     }

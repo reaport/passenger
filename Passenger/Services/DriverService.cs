@@ -38,7 +38,6 @@ public class DriverService : IDriverService, IDisposable
             {
                 if (_isPaused)
                 {
-                    _logger.Log<DriverService>(LogLevel.Information, "Driver server is paused, waiting...");
                     continue;
                 }
             }
@@ -86,6 +85,8 @@ public class DriverService : IDriverService, IDisposable
         await _pauseSemaphore.WaitAsync();
         try { _isPaused = true; }
         finally { _pauseSemaphore.Release(); }
+        _logger.Log<DriverService>(LogLevel.Information, "Driver service paused");
+
     }
 
     public async Task Resume()
@@ -93,6 +94,8 @@ public class DriverService : IDriverService, IDisposable
         await _pauseSemaphore.WaitAsync();
         try { _isPaused = false; }
         finally { _pauseSemaphore.Release(); }
+        _logger.Log<DriverService>(LogLevel.Information, "Driver service resumed");
+
     }
 
     public async Task CleanUpFlights()

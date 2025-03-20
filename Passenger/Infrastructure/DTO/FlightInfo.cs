@@ -6,7 +6,10 @@ public class FlightInfo
     public int EconomySeats {get;set;}
     public int VIPSeats {get;set;}
     public DateTime RegistrationStartTime {get;set;}
+    public DateTime DepartureTime {get;set;}
+    public DateTime BoardingStart {get;set;}
     public required IEnumerable<string> AvailableMealTypes {get;set;}
+    
     //public DateTime RegistratationStartTime {get;set;}
     //public DateTime RegistrationEndTime {get;set;}
 }

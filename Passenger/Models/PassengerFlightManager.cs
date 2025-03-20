@@ -7,16 +7,16 @@ namespace Passenger.Models;
 public class PassengerFlightManager
 {
     private ConcurrentBag<Passenger> _passengers;
-    private IPassengerStrategy _passengerStrategy;
     private IPassengerFactory _factory;
+    private InteractionServiceHolder _interactionServiceHolder;
     public FlightInfo _flightInfo;
     private readonly SemaphoreSlim _semaphore = new(1,1);
     public static event Action<PassengerFlightManager>? OnDeadFlight;
-    public PassengerFlightManager(IPassengerStrategy strategy, IPassengerFactory factory, FlightInfo flightInfo)
+    public PassengerFlightManager(IPassengerFactory factory, FlightInfo flightInfo, InteractionServiceHolder interactionServiceHolder)
     {
         _passengers = [];
-        _passengerStrategy = strategy;
         _factory = factory;
+        _interactionServiceHolder = interactionServiceHolder;
         _flightInfo = flightInfo;
 
         PopulatePassengerBag(_flightInfo.EconomySeats, _flightInfo.VIPSeats, flightInfo.AvailableMealTypes);
@@ -35,37 +35,36 @@ public class PassengerFlightManager
     }
     public Task PopulatePassengerBag(int plebCount, int vipCount, IEnumerable<string> mealPref)
     {
-        //TODO implement proper baggage gen
-
         for(int i = 0; i < plebCount; i++)
         {
-            _passengers.Add(_factory.Create(mealPref, 10.43f, PassengerClass.economy));
+            _passengers.Add(_factory.Create(_interactionServiceHolder, 5.0f, "Economy", _flightInfo));
         }
 
         for(int i = 0; i< vipCount; i++)
         {
-            _passengers.Add(_factory.Create(mealPref, 27.0f, PassengerClass.business));
+            _passengers.Add(_factory.Create(_interactionServiceHolder, 7.0f, "Business", _flightInfo));
         }
 
         return Task.CompletedTask;
     }
-    public async Task<bool> ExecutePassengerActions()
+    public async Task ExecutePassengerActions()
     {
-
         await _semaphore.WaitAsync();
         var result = new List<Task<bool>>(_passengers.Count);
 
         foreach (var passenger in _passengers)
         {
-            result.Add(_passengerStrategy.ExecutePassengerAction(passenger));
+            result.Add(passenger.ExecuteNextStep());
         }
 
         _semaphore.Release();
 
+        // TODO think how to facilitate retries, that are separate for each passenger
+        
         try
         {
             await Task.WhenAll(result);
-            return true;
+            return;
         }
         catch (AggregateException e)
         {
@@ -75,8 +74,6 @@ public class PassengerFlightManager
         {   
             System.Console.WriteLine($"Unhandled exception: {ex.Message}\n{ex.StackTrace}");
         }
-
-        return false;
     }
 
     ~PassengerFlightManager()

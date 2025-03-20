@@ -1,6 +1,9 @@
+using Passenger.Infrastructure.DTO;
+using Passenger.Services;
+
 namespace Passenger.Models;
 
 public interface IPassengerFactory
 {
-    public Passenger Create(IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass);
+    public Passenger Create(InteractionServiceHolder serviceHolder, float baggageWeight, string passengerClass, FlightInfo flightInfo);
 }

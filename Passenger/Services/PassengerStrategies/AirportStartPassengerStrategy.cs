@@ -10,63 +10,43 @@ public class AirportStartPassengerStrategy : IPassengerStrategy
 {
     private readonly ConcurrentQueue<Func<Models.Passenger, Task<bool>>> _passengerSteps;
     private FlightInfo _flightInfo;
-    private ILoggingService _logger;
-    private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
-    private const int MaxRetries = 3;
-    public AirportStartPassengerStrategy(FlightInfo flightInfo, ILoggingService logger)
+    public AirportStartPassengerStrategy(FlightInfo flightInfo)
     {
         _flightInfo = flightInfo;
-        _logger = logger;
 
         _passengerSteps = new();
 
-        _passengerSteps.Enqueue( async p =>
-        {
-            _logger.Log<AirportStartPassengerStrategy>(LogLevel.Debug, $"Passanger {p.PassengerId} is buying a ticket for flight {_flightInfo.FlightId}");
-            return await p.BuyTicket(_flightInfo.FlightId);
-        });
+        _passengerSteps.Enqueue(p=> p.BuyTicket(_flightInfo.FlightId));
 
-        _passengerSteps.Enqueue(async p=>
-        {
-            _logger.Log<AirportStartPassengerStrategy>(LogLevel.Debug, $"Passanger {p.PassengerId} is registering for the flight {_flightInfo.FlightId}");
-            return await p.RegisterForFlight(_flightInfo.RegistrationStartTime);
-        });
+        _passengerSteps.Enqueue(p=> p.RegisterForFlight(_flightInfo.RegistrationStartTime));
         
-        _passengerSteps.Enqueue(async p=>
-        {
-            _logger.Log<AirportStartPassengerStrategy>(LogLevel.Debug, $"Passanger {p.PassengerId} is boarding flight {_flightInfo.FlightId}");
-            return await p.AttemptBoarding();
-        });
+        _passengerSteps.Enqueue(p=> p.AttemptBoarding());
         
-        _passengerSteps.Enqueue(async p=>
-        {
-            _logger.Log<AirportStartPassengerStrategy>(LogLevel.Debug, $"Passanger {p.PassengerId} is leaving the aiport");
-            return await p.Die();
-        });
+        _passengerSteps.Enqueue(p=>p.Depart());
+
+        _passengerSteps.Enqueue(p=>p.Die());
         
     }
-    public async Task<bool> ExecutePassengerAction(Models.Passenger passenger)
-    {        
+
+    public object Clone()
+    {
+        // Create a new instance of the strategy with the cloned FlightInfo
+        var clonedStrategy = new AirportStartPassengerStrategy(_flightInfo);
+
+        return clonedStrategy;
+    }
+
+    public bool TryRetreiveNextPassengerStep(out Func<Models.Passenger, Task<bool>>? step)
+    {
         var res = _passengerSteps.TryDequeue(out var currentStep);
 
-        if(!res || currentStep == null) return false;
-
-        for (int attempt = 0; attempt < MaxRetries; attempt++)
+        if(res && currentStep is not null)
         {
-            try
-            {
-                bool success = await currentStep(passenger);
-                return success;
-            }
-            catch (Exception ex)
-            {
-                _logger.Log<AirportStartPassengerStrategy>(LogLevel.Error, $"Step failed (attempt {attempt + 1}): {ex.Message}");
-            }
-
-            await Task.Delay(5000);
+            step = currentStep;
+            return true;
         }
-        
-        _logger.Log<AirportStartPassengerStrategy>(LogLevel.Warning, $"Passenger {passenger.PassengerId} failed all retries");
-        return await passenger.Die();
+
+        step = null;
+        return false;
     }
 }

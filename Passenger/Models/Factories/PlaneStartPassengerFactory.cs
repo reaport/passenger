@@ -1,3 +1,4 @@
+using Passenger.Infrastructure.DTO;
 using Passenger.Services;
 
 namespace Passenger.Models;
@@ -11,9 +12,9 @@ public class PlaneStartPassengerFactory : IPassengerFactory
     }
     public InteractionServiceHolder _interactionService;
     public ILoggingService _passengerLogger;
-    public Passenger Create(IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass)
-    {
-        return Passenger.CreateOnPlane(_interactionService, mealPref, baggageWeight, passengerClass, _passengerLogger);
-    }
 
+    public Passenger Create(InteractionServiceHolder serviceHolder, float baggageWeight, string passengerClass, FlightInfo flightInfo)
+    {
+        throw new NotImplementedException();
+    }
 }

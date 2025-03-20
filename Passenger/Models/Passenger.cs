@@ -7,56 +7,64 @@ namespace Passenger.Models;
 public class Passenger
 {
     public Guid PassengerId { get; private set; }
-    public IEnumerable<string> MealPreference { get; private set; }
-    public List<string> MealChoicesBecauseImDumb { get; private set; }
+    public Guid? TicketId { get; private set; }
     public string MealChoice { get; private set; }
     public float BaggageWeight { get; private set; }
-    public Guid? TicketId { get; private set; }
-    public PassengerClass PassengerClass { get; private set; }
+    public string PassengerClass { get; private set; }
     public PassengerStatus Status { get; private set; }
-    public DateTime BoardingStart { get; private set; }
+    public FlightInfo FlightInfo {get; private set;}
+    private readonly IPassengerStrategy _strategy;
     private readonly InteractionServiceHolder _interactionServiceResolver;
     private readonly ILoggingService _logger;
     private static readonly Random _random = new();
 
-    private Passenger(InteractionServiceHolder interactionServiceResolver, ILoggingService logger)
+    private Passenger(InteractionServiceHolder interactionServiceResolver, ILoggingService logger, IPassengerStrategy passengerStrategy)
     {
+        _strategy = passengerStrategy;
         _interactionServiceResolver = interactionServiceResolver;
         _logger = logger;
     }
 
-    public static Passenger CreateInAirportStartingPoint(InteractionServiceHolder interactionService, IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass, ILoggingService logger)
+    public static Passenger CreateInAirportStartingPoint(IPassengerStrategy strategy, InteractionServiceHolder interactionService, float baggageWeight, string passengerClass, ILoggingService logger, FlightInfo flightInfo)
     {
-        return new Passenger(interactionService, logger)
+        return new Passenger(interactionService, logger, strategy)
         {
             PassengerId = Guid.NewGuid(),
-            MealPreference = mealPref,
-            MealChoicesBecauseImDumb = mealPref.ToList(),
             BaggageWeight = baggageWeight,
             PassengerClass = passengerClass,
+            FlightInfo = flightInfo,
+            MealChoice = flightInfo.AvailableMealTypes.ElementAt(_random.Next(0, flightInfo.AvailableMealTypes.Count())),
             TicketId = null,
             Status = PassengerStatus.AwaitingTicket
         };
     }
-
-    public static Passenger CreateOnPlane(InteractionServiceHolder interactionService, IEnumerable<string> mealPref, float baggageWeight, PassengerClass passengerClass, ILoggingService logger)
+    public static Passenger CreateOnPlane(IPassengerStrategy strategy, InteractionServiceHolder interactionService, float baggageWeight, string passengerClass, ILoggingService logger, FlightInfo flightInfo)
     {
-        return new Passenger(interactionService, logger)
+        return new Passenger(interactionService, logger, strategy)
         {
             PassengerId = Guid.NewGuid(),
-            MealPreference = mealPref,
-            MealChoicesBecauseImDumb = mealPref.ToList(),
             BaggageWeight = baggageWeight,
-            TicketId = null,
             PassengerClass = passengerClass,
+            FlightInfo = flightInfo,
+            MealChoice = flightInfo.AvailableMealTypes.ElementAt(_random.Next(0, flightInfo.AvailableMealTypes.Count())),
+            TicketId = null,
             Status = PassengerStatus.OnPlane
         };
     }
 
+    public async Task<bool> ExecuteNextStep()
+    {
+        bool retreived = _strategy.TryRetreiveNextPassengerStep(out var step);
+
+        if (!retreived) return false;
+
+        if(!await step(this)) return false;
+
+        return true;
+    }
+
     public async Task<bool> BuyTicket(string flightId)
     {
-        MealChoice = MealChoicesBecauseImDumb[_random.Next(MealChoicesBecauseImDumb.Count)];
-
         var request = new BuyTicketRequest
         {
             PassengerId = PassengerId.ToString(),
@@ -117,7 +125,8 @@ public class Passenger
             return false;
         }
 
-        BoardingStart = response.Data!.StartPlantingTime;
+        FlightInfo.BoardingStart = response.Data!.StartPlantingTime;
+
         Status = PassengerStatus.AwaitingBoarding;
         _logger.Log<Passenger>(LogLevel.Information, $"Passenger {PassengerId} succesfully registered for their flight");
         return true;
@@ -125,10 +134,10 @@ public class Passenger
 
     public async Task<bool> AttemptBoarding()
     {
-        var now = DateTime.UtcNow; // Use UTC time
-        if (BoardingStart > now)
+        var now = DateTime.Now;
+        if (FlightInfo.BoardingStart > now)
         {
-            var delay = BoardingStart - now - TimeSpan.FromSeconds(1);
+            var delay = FlightInfo.BoardingStart - now - TimeSpan.FromSeconds(1);
             if (delay > TimeSpan.Zero)
             {
                 await Task.Delay(delay);
@@ -138,6 +147,21 @@ public class Passenger
         _logger.Log<Passenger>(LogLevel.Information, $"Passenger {PassengerId} boarded");
         Status = PassengerStatus.InTransit;
         return true;
+    }
+
+    public async Task<bool> Depart()
+    {
+        var now = DateTime.Now;
+
+        if(FlightInfo.DepartureTime > now)
+        {
+            var delay = FlightInfo.BoardingStart - now;
+            await Task.Delay(delay);
+        }
+
+        _logger.Log<Passenger>(LogLevel.Information, $"Passenger {PassengerId} has successfully departed");
+        return true;
+
     }
 
     public static event Action<Passenger>? OnPassengerDied;

@@ -1,7 +1,6 @@
 namespace Passenger.Services;
 
-public interface IPassengerStrategy
+public interface IPassengerStrategy : ICloneable
 {
-    //public string FlightId {get;set;}
-    public Task<bool> ExecutePassengerAction(Models.Passenger passenger);
+    public bool TryRetreiveNextPassengerStep(out Func<Models.Passenger, Task<bool>> step);
 }

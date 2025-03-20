@@ -15,6 +15,8 @@ public class FlightRefreshServiceFake : IFlightRefreshService
                 EconomySeats = 5,
                 VIPSeats = 2,
                 RegistrationStartTime = DateTime.Now.AddSeconds(10),
+                BoardingStart = DateTime.Now.AddSeconds(15),
+                DepartureTime = DateTime.Now.AddSeconds(20),
                 AvailableMealTypes = ["Carnivorous, Balanced"]
             },
             new FlightInfo
@@ -22,7 +24,9 @@ public class FlightRefreshServiceFake : IFlightRefreshService
                 FlightId = Guid.NewGuid().ToString(),
                 EconomySeats = 10,
                 VIPSeats = 5,
-                RegistrationStartTime = DateTime.Now.AddSeconds(5),
+                RegistrationStartTime = DateTime.Now.AddSeconds(10),
+                BoardingStart = DateTime.Now.AddSeconds(15),
+                DepartureTime = DateTime.Now.AddSeconds(20),
                 AvailableMealTypes = ["Carnivorous, Balanced, Sunrays"]
             },
             new FlightInfo
@@ -31,6 +35,8 @@ public class FlightRefreshServiceFake : IFlightRefreshService
                 EconomySeats = 15,
                 VIPSeats = 3,
                 RegistrationStartTime = DateTime.Now.AddSeconds(10),
+                BoardingStart = DateTime.Now.AddSeconds(15),
+                DepartureTime = DateTime.Now.AddSeconds(20),
                 AvailableMealTypes = ["Schizo-Juice, Vegan"]
             }
         };

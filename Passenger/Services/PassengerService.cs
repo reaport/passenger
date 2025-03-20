@@ -11,16 +11,19 @@ namespace Passenger.Services
     {
         private ConcurrentBag<PassengerFlightManager> _flightManagers;
         private RefreshServiceHolder _refreshServiceHolder;
+        private InteractionServiceHolder _interactionServiceHolder;
         private IServiceProvider _serviceProvider;
         private ILoggingService _loggingService;
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
-        public PassengerService(RefreshServiceHolder refreshServiceHolder, 
-                              IServiceProvider serviceProvider, 
-                              ILoggingService loggingService)
+        public PassengerService(RefreshServiceHolder refreshServiceHolder,
+                            InteractionServiceHolder interactionServiceHolder,
+                            IServiceProvider serviceProvider, 
+                            ILoggingService loggingService)
         {
             _serviceProvider = serviceProvider;
             _refreshServiceHolder = refreshServiceHolder;
+            _interactionServiceHolder = interactionServiceHolder;
             _loggingService = loggingService;
             _flightManagers = new ConcurrentBag<PassengerFlightManager>();
 
@@ -55,7 +58,7 @@ namespace Passenger.Services
             try
             {
                 _loggingService.Log<PassengerService>(LogLevel.Debug, 
-                    "Started creating flight manager execute tasks");
+                    "Started creating flight manager execution tasks");
                 
                 var flights = _flightManagers.ToList();
                 foreach (var flight in flights)
@@ -88,9 +91,8 @@ namespace Passenger.Services
                 {
                     foreach (var flightInfo in flightsToInit)
                     {
-                        var strategy = new AirportStartPassengerStrategy(flightInfo, _loggingService);
                         var factory = _serviceProvider.GetRequiredKeyedService<IPassengerFactory>("Airport");
-                        var flightManager = new PassengerFlightManager(strategy, factory, flightInfo);
+                        var flightManager = new PassengerFlightManager(factory, flightInfo, _interactionServiceHolder);
                         _flightManagers.Add(flightManager);
                         _loggingService.Log<PassengerService>(LogLevel.Information, 
                             $"Initialised new flight with id {flightInfo.FlightId}");

@@ -63,6 +63,7 @@ public class FlightRefreshService : IFlightRefreshService
                 EconomySeats = flightCrapInfo.AvailableSeats!["Economy"],
                 VIPSeats = flightCrapInfo.AvailableSeats["Business"],
                 RegistrationStartTime = flightCrapInfo.RegistrationStartTime,
+                DepartureTime = flightCrapInfo.DepartureTime,
                 AvailableMealTypes = meals
             }
         ) 
