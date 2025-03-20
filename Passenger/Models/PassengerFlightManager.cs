@@ -49,7 +49,7 @@ public class PassengerFlightManager
     }
     public async Task ExecutePassengerActions()
     {
-        await _semaphore.WaitAsync();
+        //await _semaphore.WaitAsync();
         var result = new List<Task<bool>>(_passengers.Count);
 
         foreach (var passenger in _passengers)
@@ -57,13 +57,10 @@ public class PassengerFlightManager
             result.Add(passenger.ExecuteNextStep());
         }
 
-        _semaphore.Release();
-
-        // TODO think how to facilitate retries, that are separate for each passenger
-        
+        //_semaphore.Release();
         try
         {
-            await Task.WhenAll(result);
+            var task = await Task.WhenAll(result);
             return;
         }
         catch (AggregateException e)

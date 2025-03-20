@@ -54,7 +54,7 @@ namespace Passenger.Services
             }
 
             await _semaphore.WaitAsync();
-            var result = new List<Task>();
+            var result = new List<Task>(_flightManagers.Count());
             try
             {
                 _loggingService.Log<PassengerService>(LogLevel.Debug, 
