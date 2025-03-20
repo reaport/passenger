@@ -29,7 +29,8 @@ namespace Passenger.Controllers
         public IActionResult GetLogs()
         {
             var logs = _loggingService.GetLogs();
-            return Json(logs); 
+            var display = logs.AsEnumerable().Reverse().ToList();
+            return Json(display);
         }
         public IActionResult Index()
         {
@@ -55,7 +56,7 @@ namespace Passenger.Controllers
         public IActionResult CleanupFlights()
         {
             _passengerService.CleanupFlights();
-            ViewBag.Message("Cleaned up initialised flights");
+            ViewBag.Message = "Cleaned up initialised flights";
             _loggingService.Log<HomeController>(LogLevel.Information, $"Deleted all internal initialised flights");
             return View("Index");
         }

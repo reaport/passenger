@@ -27,7 +27,7 @@ namespace Passenger.Services
 
         public void Log<T>(LogLevel level, string message)
         {
-            string formattedMessage = $"[{level}] [{typeof(T).Name}] {message}";
+            string formattedMessage = $"[{DateTime.Now.ToString("o")}] [{level}] [{typeof(T).Name}] {message}";
 
             // Store log in central list
             _logs.Add(formattedMessage);
