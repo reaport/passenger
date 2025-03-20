@@ -11,7 +11,7 @@ public class FlightRefreshServiceFake : IFlightRefreshService
         {
             new FlightInfo
             {
-                FlightId = Guid.NewGuid().ToString(),
+                FlightId = "HONK001",
                 EconomySeats = 5,
                 VIPSeats = 2,
                 RegistrationStartTime = DateTime.Now.AddSeconds(10),
@@ -21,7 +21,7 @@ public class FlightRefreshServiceFake : IFlightRefreshService
             },
             new FlightInfo
             {
-                FlightId = Guid.NewGuid().ToString(),
+                FlightId = "HIPPIE002",
                 EconomySeats = 10,
                 VIPSeats = 5,
                 RegistrationStartTime = DateTime.Now.AddSeconds(10),
@@ -31,7 +31,7 @@ public class FlightRefreshServiceFake : IFlightRefreshService
             },
             new FlightInfo
             {
-                FlightId = Guid.NewGuid().ToString(),
+                FlightId = "ACIDBATH003",
                 EconomySeats = 15,
                 VIPSeats = 3,
                 RegistrationStartTime = DateTime.Now.AddSeconds(10),
