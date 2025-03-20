@@ -13,6 +13,7 @@ public class Passenger
     public string PassengerClass { get; private set; }
     public PassengerStatus Status { get; private set; }
     public FlightInfo FlightInfo {get; private set;}
+    private readonly int MaxRetries = 3;
     private readonly IPassengerStrategy _strategy;
     private readonly InteractionServiceHolder _interactionServiceResolver;
     private readonly ILoggingService _logger;
@@ -58,9 +59,15 @@ public class Passenger
 
         if (!retreived) return false;
 
-        if(!await step(this)) return false;
-
-        return true;
+        int attempt = 0;
+        while(attempt<MaxRetries)
+        {
+            if(await step(this)) return true;
+            _logger.Log<Passenger>(LogLevel.Warning, $"Passenger {PassengerId} failed their action, attempt {attempt}, retrying");
+            attempt++;
+        }
+        _logger.Log<Passenger>(LogLevel.Warning, $"Passenger {PassengerId} failed all retries");
+        return false;
     }
 
     public async Task<bool> BuyTicket(string flightId)
@@ -142,6 +149,7 @@ public class Passenger
             {
                 await Task.Delay(delay);
             }
+
         }
 
         _logger.Log<Passenger>(LogLevel.Information, $"Passenger {PassengerId} boarded");

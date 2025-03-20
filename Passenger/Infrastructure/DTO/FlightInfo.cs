@@ -9,9 +9,6 @@ public class FlightInfo
     public DateTime DepartureTime {get;set;}
     public DateTime BoardingStart {get;set;}
     public required IEnumerable<string> AvailableMealTypes {get;set;}
-    
-    //public DateTime RegistratationStartTime {get;set;}
-    //public DateTime RegistrationEndTime {get;set;}
 }
 
 public class FlightIdComparer : IEqualityComparer<FlightInfo>
