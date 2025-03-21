@@ -10,6 +10,7 @@ namespace Passenger.Services
     public class PassengerService : IPassengerService, IDisposable
     {
         private ConcurrentBag<PassengerFlightManager> _flightManagers;
+        private ConcurrentBag<FlightInfo> _previousFlights;
         private RefreshServiceHolder _refreshServiceHolder;
         private InteractionServiceHolder _interactionServiceHolder;
         private IServiceProvider _serviceProvider;
@@ -85,13 +86,14 @@ namespace Passenger.Services
             var existingFlights = _flightManagers
                 .Select(fm => fm._flightInfo);
 
-            var flightsToInit = availableFlights.Except(existingFlights, new FlightIdComparer());
+            var flightsToInit = availableFlights.Except(_previousFlights, new FlightIdComparer());
 
             if (flightsToInit.Any())
             {
                     var factory = _serviceProvider.GetRequiredKeyedService<IPassengerFactory>("Airport");
                     foreach (var flightInfo in flightsToInit)
                     {
+                        _previousFlights.Add(flightInfo);
                         var flightManager = new PassengerFlightManager(factory, flightInfo, _interactionServiceHolder, _loggingService);
                         _flightManagers.Add(flightManager);
                         _loggingService.Log<PassengerService>(LogLevel.Information, 
