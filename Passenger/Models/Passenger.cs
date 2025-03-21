@@ -106,7 +106,7 @@ public class Passenger
 
     public async Task<bool> RegisterForFlight(DateTime registrationStart)
     {
-        TimeSpan delay = registrationStart - DateTime.UtcNow;
+        TimeSpan delay = registrationStart - DateTime.UtcNow - TimeSpan.FromHours(3);
         _logger.Log<Passenger>(LogLevel.Debug, $"Passenger {PassengerId} is waiting to register for flight {FlightInfo.FlightId} until {registrationStart.ToString("o")}");
         if (delay > TimeSpan.Zero)
         {
@@ -149,7 +149,7 @@ public class Passenger
         var now = DateTime.UtcNow;
         if (FlightInfo.BoardingStart > now)
         {
-            var delay = FlightInfo.BoardingStart - now - TimeSpan.FromSeconds(1);
+            var delay = FlightInfo.BoardingStart - now - TimeSpan.FromHours(3);
             if (delay > TimeSpan.Zero)
             {
                 await Task.Delay(delay);
