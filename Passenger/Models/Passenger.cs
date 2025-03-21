@@ -149,7 +149,7 @@ public class Passenger
         var now = DateTime.UtcNow;
         if (FlightInfo.BoardingStart > now)
         {
-            var delay = FlightInfo.BoardingStart - now - TimeSpan.FromHours(3);
+            var delay = FlightInfo.BoardingStart - now;
             if (delay > TimeSpan.Zero)
             {
                 await Task.Delay(delay);
