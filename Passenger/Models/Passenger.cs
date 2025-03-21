@@ -106,10 +106,10 @@ public class Passenger
 
     public async Task<bool> RegisterForFlight(DateTime registrationStart)
     {
-        TimeSpan delay = registrationStart - DateTime.Now;
+        TimeSpan delay = registrationStart.ToLocalTime() - DateTime.Now;
+        _logger.Log<Passenger>(LogLevel.Debug, $"Passenger {PassengerId} is waiting to register for flight {FlightInfo.FlightId} until {registrationStart.ToString("o")}");
         if (delay > TimeSpan.Zero)
         {
-            _logger.Log<Passenger>(LogLevel.Debug, $"Passenger {PassengerId} is waiting to register for flight {FlightInfo.FlightId} until {registrationStart.ToUniversalTime().ToString("U")}");
             await Task.Delay(delay);
         }
 
@@ -147,7 +147,7 @@ public class Passenger
     public async Task<bool> AttemptBoarding()
     {
         var now = DateTime.Now;
-        if (FlightInfo.BoardingStart > now)
+        if (FlightInfo.BoardingStart.ToLocalTime() > now)
         {
             var delay = FlightInfo.BoardingStart - now - TimeSpan.FromSeconds(1);
             if (delay > TimeSpan.Zero)
