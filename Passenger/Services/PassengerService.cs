@@ -67,7 +67,7 @@ namespace Passenger.Services
                     // Handle all exceptions (not just the first one thrown)
                     foreach (var innerEx in whenAllTask.Exception.InnerExceptions)
                     {
-                        _loggingService.Log<PassengerService>(LogLevel.Error, $"Exception from task: {innerEx.Message}");
+                        _loggingService.Log<PassengerService>(LogLevel.Error, $"Exception from task: {innerEx.Message}\n{innerEx.StackTrace}");
                         
                     }
                 }
