@@ -23,11 +23,11 @@ public class DriverService : IDriverService, IDisposable
     {
         _logger.Log<DriverService>(LogLevel.Information, "Background driving service started running.");
         _refreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(10));
-        //_passengerActionTimer = new(TimeSpan.FromSeconds(5));
+        _passengerActionTimer = new(TimeSpan.FromSeconds(5));
         
         // Use Task.Run instead of StartNew for clearer async intent
         Task.Run(() => RefreshFlights(_refreshTimer, stoppingToken), stoppingToken);
-        //Task.Run( () => ExecutePassengerActions(_passengerActionTimer, stoppingToken),stoppingToken);
+        Task.Run( () => ExecutePassengerActions(_passengerActionTimer, stoppingToken),stoppingToken);
         
         return Task.CompletedTask;
     }
@@ -55,18 +55,6 @@ public class DriverService : IDriverService, IDisposable
             {
                 _logger.Log<DriverService>(LogLevel.Critical, 
                     $"Could not refresh flights: {e.Message}");
-            }
-
-            try
-            {
-                _logger.Log<DriverService>(LogLevel.Debug, "Trying to execute passenger actions");
-                await _passengerService.ExecutePassengerActions();
-            }
-            catch (Exception e)
-            {
-                _logger.Log<DriverService>(LogLevel.Critical, 
-                    $"Unhandled exception executing passenger actions: {e.Message}\n{e.StackTrace}");
-                throw;
             }
         }
     }
