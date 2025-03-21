@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Passenger.Infrastructure;
 using Passenger.Infrastructure.DTO;
 using Passenger.Infrastructure.DTO.HUETA;
 
@@ -28,7 +29,7 @@ public class FlightRefreshService : IFlightRefreshService
         
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception($"Error fetching flights: {response.StatusCode}");
+            throw new ApiRequestException(httpClient.BaseAddress+"buy", response.StatusCode, response.Content.ToString());
         }
 
         string responseContent = await response.Content.ReadAsStringAsync();

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using System.Threading;
+using System.Net;
 
 namespace Passenger.Services;
 
@@ -41,6 +42,14 @@ public class DriverService : IDriverService, IDisposable
             {
                 await _passengerService.RefreshAndInitFlights();
                 _logger.Log<DriverService>(LogLevel.Information, "Refreshed available flights.");
+            }
+            catch (ApiRequestException e)
+            {
+                if(e.StatusCode == HttpStatusCode.NotFound) 
+                {
+                    _logger.Log<DriverService>(LogLevel.Error, $"Failed to get new flights, no flights available to buy tickets for");
+                    throw;
+                }
             }
             catch (Exception e)
             {
