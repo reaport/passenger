@@ -37,7 +37,6 @@ namespace Passenger.Services
                 cts.Dispose();
             }
             _managersTokens.Clear();
-            _previousFlights.Clear();
             
             GC.Collect();
         }
