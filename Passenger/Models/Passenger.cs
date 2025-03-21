@@ -69,6 +69,7 @@ public class Passenger
             attempt++;
         }
         _logger.Log<Passenger>(LogLevel.Warning, $"Passenger {PassengerId} failed all retries");
+        await Die();
         return false;
     }
 
@@ -182,6 +183,7 @@ public class Passenger
     {
         OnPassengerDied?.Invoke(this);
         Status = PassengerStatus.LeavingAirport;
+        _logger.Log<Passenger>(LogLevel.Information, $"Passenger {PassengerId} died and is no longer with us");
         return true;
     }
 }
