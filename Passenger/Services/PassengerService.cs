@@ -69,8 +69,13 @@ namespace Passenger.Services
 
                     // Start flight handling task
                     _ = HandleFlight(flightManager, TimeSpan.FromSeconds(5), cts.Token);
+
                 }
+
+                return;
             }
+
+            _loggingService.Log<PassengerService>(LogLevel.Information, $"No new flights found to initialise");
         }
 
         private async Task HandleFlight(PassengerFlightManager flightManager, TimeSpan actionInterval, CancellationToken cancellationToken)

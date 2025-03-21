@@ -39,7 +39,6 @@ public class DriverService : IDriverService, IDisposable
             {
                 _logger.Log<DriverService>(LogLevel.Information, "Refreshing available flights.");
                 await _passengerService.RefreshAndInitFlights();
-                _logger.Log<DriverService>(LogLevel.Information, "Refreshed available flights.");
             }
             catch (ApiRequestException e)
             {
@@ -69,7 +68,7 @@ public class DriverService : IDriverService, IDisposable
         await _pauseSemaphore.WaitAsync();
         try { _isPaused = true; }
         finally { _pauseSemaphore.Release(); }
-        _logger.Log<DriverService>(LogLevel.Information, "Driver service paused");
+        _logger.Log<DriverService>(LogLevel.Information, "Refresh service paused");
 
     }
 
@@ -78,7 +77,7 @@ public class DriverService : IDriverService, IDisposable
         await _pauseSemaphore.WaitAsync();
         try { _isPaused = false; }
         finally { _pauseSemaphore.Release(); }
-        _logger.Log<DriverService>(LogLevel.Information, "Driver service resumed");
+        _logger.Log<DriverService>(LogLevel.Information, "Refresh service resumed");
 
     }
 
