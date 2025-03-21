@@ -146,8 +146,8 @@ public class Passenger
 
     public async Task<bool> AttemptBoarding()
     {
-        var now = DateTime.Now;
-        if (FlightInfo.BoardingStart.ToLocalTime() > now)
+        var now = DateTime.UtcNow;
+        if (FlightInfo.BoardingStart > now)
         {
             var delay = FlightInfo.BoardingStart - now - TimeSpan.FromSeconds(1);
             if (delay > TimeSpan.Zero)
@@ -164,7 +164,7 @@ public class Passenger
 
     public async Task<bool> Depart()
     {
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
         if(FlightInfo.DepartureTime > now)
         {
