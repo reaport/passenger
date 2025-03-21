@@ -45,7 +45,7 @@ namespace Passenger.Services
             if (!_flightManagers.Any())
             {
                 _loggingService.Log<PassengerService>(LogLevel.Information, 
-                    "No initialised flights present");
+                    "No initialised flights, nothing to execute");
                 return;
             }
 

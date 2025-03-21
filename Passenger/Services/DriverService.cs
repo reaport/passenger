@@ -40,6 +40,7 @@ public class DriverService : IDriverService, IDisposable
 
             try
             {
+                _logger.Log<DriverService>(LogLevel.Information, "Refreshing available flights.");
                 await _passengerService.RefreshAndInitFlights();
                 _logger.Log<DriverService>(LogLevel.Information, "Refreshed available flights.");
             }
@@ -66,7 +67,7 @@ public class DriverService : IDriverService, IDisposable
 
             try
             {
-                _logger.Log<DriverService>(LogLevel.Debug, "Trying to execute passenger actions");
+                _logger.Log<DriverService>(LogLevel.Debug, "Executing passenger actions");
                 await _passengerService.ExecutePassengerActions();
             }
             catch (Exception e)
