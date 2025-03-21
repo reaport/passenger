@@ -109,7 +109,7 @@ public class Passenger
         TimeSpan delay = registrationStart - DateTime.Now;
         if (delay > TimeSpan.Zero)
         {
-            _logger.Log<Passenger>(LogLevel.Debug, $"Passenger {PassengerId} is waiting to register for flight {FlightInfo.FlightId}");
+            _logger.Log<Passenger>(LogLevel.Debug, $"Passenger {PassengerId} is waiting to register for flight {FlightInfo.FlightId} until {registrationStart.ToUniversalTime().ToString("U")}");
             await Task.Delay(delay);
         }
 
