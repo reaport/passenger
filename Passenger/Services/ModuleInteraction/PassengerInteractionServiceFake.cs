@@ -30,7 +30,7 @@ public class PassengerInteractionServiceFake : IPassengerInteractionService
         {
             Data = new RegisterPassengerResponse
             {
-                FlightName = Guid.NewGuid(),
+                FlightName = "HONKHONK123",
                 DepartureTime = DateTime.Now + TimeSpan.FromSeconds(400),
                 StartPlantingTime = DateTime.Now + TimeSpan.FromSeconds(20),
                 Seat = "ABC2345"
