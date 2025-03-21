@@ -1,3 +1,4 @@
+using Passenger.Infrastructure;
 using Passenger.Infrastructure.DTO;
 using Passenger.Infrastructure.DTO.HUETA;
 using Passenger.Services;
@@ -63,6 +64,7 @@ public class Passenger
         while(attempt<MaxRetries)
         {
             if(await step(this)) return true;
+
             _logger.Log<Passenger>(LogLevel.Warning, $"Passenger {PassengerId} failed their action, attempt {attempt}, retrying");
             attempt++;
         }
@@ -104,6 +106,7 @@ public class Passenger
 
     public async Task<bool> RegisterForFlight(DateTime registrationStart)
     {
+        _logger.Log<Passenger>(LogLevel.Debug, $"Passenger {PassengerId} is trying to register for flight {FlightInfo.FlightId}");
         TimeSpan delay = registrationStart - DateTime.UtcNow;
         if (delay > TimeSpan.Zero)
         {

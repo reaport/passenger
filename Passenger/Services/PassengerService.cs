@@ -14,7 +14,9 @@ namespace Passenger.Services
         private InteractionServiceHolder _interactionServiceHolder;
         private IServiceProvider _serviceProvider;
         private ILoggingService _loggingService;
-        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _passengerExecutionSemaphore = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _flightRefreshSemaphore = new SemaphoreSlim(1,1);
+        private readonly SemaphoreSlim _flightDeathSemaphore = new(1,1);
 
         public PassengerService(RefreshServiceHolder refreshServiceHolder,
                             InteractionServiceHolder interactionServiceHolder,
@@ -32,15 +34,9 @@ namespace Passenger.Services
 
         public void CleanupFlights()
         {
-            _semaphore.Wait();
-            try
-            {
-                _flightManagers = new ConcurrentBag<PassengerFlightManager>();
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
+
+            _flightManagers = new ConcurrentBag<PassengerFlightManager>();
+  
             GC.Collect();
         }
 
@@ -53,26 +49,34 @@ namespace Passenger.Services
                 return;
             }
 
-            await _semaphore.WaitAsync();
-            var result = new List<Task>(_flightManagers.Count());
+            var tasks = _flightManagers.Select(p => p.ExecutePassengerActions());
+
+            // Create the aggregated task first
+            Task whenAllTask = Task.WhenAll(tasks);
+
             try
             {
-                _loggingService.Log<PassengerService>(LogLevel.Debug, 
-                    "Started creating flight manager execution tasks");
-                
-                var flights = _flightManagers.ToList();
-                foreach (var flight in flights)
+                await whenAllTask; // Throws the first exception encountered
+            }
+            catch (Exception ex)
+            {
+                // Check if the aggregated task has exceptions
+                if (whenAllTask.Exception != null)
                 {
-                    result.Add(flight.ExecutePassengerActions());
+                    // Handle all exceptions (not just the first one thrown)
+                    foreach (var innerEx in whenAllTask.Exception.InnerExceptions)
+                    {
+                        _loggingService.Log<PassengerService>(LogLevel.Error, $"Exception from task: {innerEx.Message}");
+                        
+                    }
+                }
+                else
+                {
+                    // Handle the case where the exception is not from the tasks
+                    // (e.g., cancellation)
+                    _loggingService.Log<PassengerService>(LogLevel.Error, $"General exception {ex.Message}");
                 }
             }
-            finally
-            {
-                _semaphore.Release();
-            }
-
-            await Task.WhenAll(result);
-            return;
         }
 
         public async Task RefreshAndInitFlights()
@@ -86,13 +90,13 @@ namespace Passenger.Services
 
             if (flightsToInit.Any())
             {
-                await _semaphore.WaitAsync();
+                await _flightRefreshSemaphore.WaitAsync();
                 try
                 {
+                    var factory = _serviceProvider.GetRequiredKeyedService<IPassengerFactory>("Airport");
                     foreach (var flightInfo in flightsToInit)
                     {
-                        var factory = _serviceProvider.GetRequiredKeyedService<IPassengerFactory>("Airport");
-                        var flightManager = new PassengerFlightManager(factory, flightInfo, _interactionServiceHolder);
+                        var flightManager = new PassengerFlightManager(factory, flightInfo, _interactionServiceHolder, _loggingService);
                         _flightManagers.Add(flightManager);
                         _loggingService.Log<PassengerService>(LogLevel.Information, 
                             $"Initialised new flight with id {flightInfo.FlightId}");
@@ -100,14 +104,14 @@ namespace Passenger.Services
                 }
                 finally
                 {
-                    _semaphore.Release();
+                    _flightRefreshSemaphore.Release();
                 }
             }
         }
 
         private void HandleFlightDeath(PassengerFlightManager manager)
         {   
-            _semaphore.Wait();
+            _flightDeathSemaphore.Wait();
             try
             {
                 _flightManagers = new ConcurrentBag<PassengerFlightManager>(
@@ -115,7 +119,7 @@ namespace Passenger.Services
             }
             finally
             {
-                _semaphore.Release();
+                _flightDeathSemaphore.Release();
             }
 
             _loggingService.Log<PassengerService>(LogLevel.Information, 
@@ -124,7 +128,7 @@ namespace Passenger.Services
 
         public void Dispose()
         {
-            _semaphore?.Dispose();
+            _passengerExecutionSemaphore?.Dispose();
         }
 
         // Rest of the class remains unchanged

@@ -10,14 +10,16 @@ public class PassengerFlightManager
     private IPassengerFactory _factory;
     private InteractionServiceHolder _interactionServiceHolder;
     public FlightInfo _flightInfo;
+    private readonly ILoggingService _logger;
     private readonly SemaphoreSlim _semaphore = new(1,1);
     public static event Action<PassengerFlightManager>? OnDeadFlight;
-    public PassengerFlightManager(IPassengerFactory factory, FlightInfo flightInfo, InteractionServiceHolder interactionServiceHolder)
+    public PassengerFlightManager(IPassengerFactory factory, FlightInfo flightInfo, InteractionServiceHolder interactionServiceHolder, ILoggingService loggingService)
     {
         _passengers = [];
         _factory = factory;
         _interactionServiceHolder = interactionServiceHolder;
         _flightInfo = flightInfo;
+        _logger = loggingService;
 
         PopulatePassengerBag(_flightInfo.EconomySeats, _flightInfo.VIPSeats, flightInfo.AvailableMealTypes);
         
@@ -49,27 +51,31 @@ public class PassengerFlightManager
     }
     public async Task ExecutePassengerActions()
     {
-        //await _semaphore.WaitAsync();
-        var result = new List<Task<bool>>(_passengers.Count);
+        var tasks = _passengers.Select( p => p.ExecuteNextStep());
 
-        foreach (var passenger in _passengers)
-        {
-            result.Add(passenger.ExecuteNextStep());
-        }
-
-        //_semaphore.Release();
+        var whenAllTask = Task.WhenAll(tasks);
+        
         try
         {
-            var task = await Task.WhenAll(result);
-            return;
+            await whenAllTask;
         }
-        catch (AggregateException e)
+        catch (Exception ex)
         {
-            System.Console.WriteLine($"Aggregate exception: {e.Message}\n{e.InnerExceptions}");
-        }
-        catch(Exception ex)
-        {   
-            System.Console.WriteLine($"Unhandled exception: {ex.Message}\n{ex.StackTrace}");
+            // Check if the aggregated task has exceptions
+            if (whenAllTask.Exception != null)
+            {
+                // Handle all exceptions (not just the first one thrown)
+                foreach (var innerEx in whenAllTask.Exception.InnerExceptions)
+                {
+                    _logger.Log<PassengerService>(LogLevel.Error, $"Exception from task: {innerEx.Message}");
+                }
+            }
+            else
+            {
+                // Handle the case where the exception is not from the tasks
+                // (e.g., cancellation)
+                _logger.Log<PassengerService>(LogLevel.Error, $"General exception {ex.Message}");
+            }
         }
     }
 

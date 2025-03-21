@@ -55,7 +55,6 @@ public class DriverService : IDriverService, IDisposable
             {
                 _logger.Log<DriverService>(LogLevel.Critical, 
                     $"Could not refresh flights: {e.Message}");
-                await Task.Delay(5000, cancellationToken); 
                 continue;
             }
 
@@ -68,7 +67,8 @@ public class DriverService : IDriverService, IDisposable
             {
                 _logger.Log<DriverService>(LogLevel.Critical, 
                     $"Unhandled exception executing passenger actions: {e.Message}\n{e.StackTrace}");
-                await Task.Delay(5000, cancellationToken);
+                
+                throw;
             }
         }
     }
@@ -114,6 +114,6 @@ public class DriverService : IDriverService, IDisposable
     public void Dispose()
     {
         _refreshTimer?.Dispose();
-        _pauseSemaphore?.Dispose(); // Clean up semaphore
+        _pauseSemaphore?.Dispose();
     }
 }

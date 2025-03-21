@@ -14,9 +14,9 @@ public class FlightRefreshServiceFake : IFlightRefreshService
                 FlightId = "HONK001",
                 EconomySeats = 5,
                 VIPSeats = 2,
-                RegistrationStartTime = DateTime.Now.AddSeconds(10),
+                RegistrationStartTime = DateTime.Now.AddSeconds(5),
                 BoardingStart = DateTime.Now.AddSeconds(15),
-                DepartureTime = DateTime.Now.AddSeconds(20),
+                DepartureTime = DateTime.Now.AddSeconds(25),
                 AvailableMealTypes = ["Carnivorous, Balanced"]
             },
             new FlightInfo
@@ -24,9 +24,9 @@ public class FlightRefreshServiceFake : IFlightRefreshService
                 FlightId = "HIPPIE002",
                 EconomySeats = 10,
                 VIPSeats = 5,
-                RegistrationStartTime = DateTime.Now.AddSeconds(10),
+                RegistrationStartTime = DateTime.Now.AddSeconds(5),
                 BoardingStart = DateTime.Now.AddSeconds(15),
-                DepartureTime = DateTime.Now.AddSeconds(20),
+                DepartureTime = DateTime.Now.AddSeconds(25),
                 AvailableMealTypes = ["Carnivorous, Balanced, Sunrays"]
             },
             new FlightInfo
@@ -34,9 +34,9 @@ public class FlightRefreshServiceFake : IFlightRefreshService
                 FlightId = "ACIDBATH003",
                 EconomySeats = 15,
                 VIPSeats = 3,
-                RegistrationStartTime = DateTime.Now.AddSeconds(10),
+                RegistrationStartTime = DateTime.Now.AddSeconds(5),
                 BoardingStart = DateTime.Now.AddSeconds(15),
-                DepartureTime = DateTime.Now.AddSeconds(20),
+                DepartureTime = DateTime.Now.AddSeconds(25),
                 AvailableMealTypes = ["Schizo-Juice, Vegan"]
             }
         };
