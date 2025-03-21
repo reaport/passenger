@@ -28,6 +28,7 @@ namespace Passenger.Services
             _interactionServiceHolder = interactionServiceHolder;
             _loggingService = loggingService;
             _flightManagers = new ConcurrentBag<PassengerFlightManager>();
+            _previousFlights = new();
 
             PassengerFlightManager.OnDeadFlight += HandleFlightDeath;
         }
