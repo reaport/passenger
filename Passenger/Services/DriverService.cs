@@ -55,7 +55,7 @@ public class DriverService : IDriverService, IDisposable
             catch (Exception e)
             {
                 _logger.Log<DriverService>(LogLevel.Critical, 
-                    $"Could not refresh flights: {e.Message}");
+                    $"Could not refresh flights: {e.Message}\n{e.StackTrace}");
             }
         }
     }
