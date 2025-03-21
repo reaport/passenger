@@ -1,22 +1,18 @@
 using Passenger.Infrastructure.DTO;
 using Passenger.Models;
 using System.Collections.Concurrent;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Threading;
+
 
 namespace Passenger.Services
 {
     public class PassengerService : IPassengerService, IDisposable
     {
-        private ConcurrentBag<PassengerFlightManager> _flightManagers;
         private ConcurrentBag<FlightInfo> _previousFlights;
+        private ConcurrentDictionary<PassengerFlightManager, CancellationTokenSource> _managersTokens; 
         private RefreshServiceHolder _refreshServiceHolder;
         private InteractionServiceHolder _interactionServiceHolder;
         private IServiceProvider _serviceProvider;
         private ILoggingService _loggingService;
-        private readonly SemaphoreSlim _passengerExecutionSemaphore = new SemaphoreSlim(1, 1);
-        private readonly SemaphoreSlim _flightDeathSemaphore = new(1,1);
 
         public PassengerService(RefreshServiceHolder refreshServiceHolder,
                             InteractionServiceHolder interactionServiceHolder,
@@ -27,7 +23,7 @@ namespace Passenger.Services
             _refreshServiceHolder = refreshServiceHolder;
             _interactionServiceHolder = interactionServiceHolder;
             _loggingService = loggingService;
-            _flightManagers = new ConcurrentBag<PassengerFlightManager>();
+            _managersTokens = new();
             _previousFlights = new();
 
             PassengerFlightManager.OnDeadFlight += HandleFlightDeath;
@@ -35,97 +31,99 @@ namespace Passenger.Services
 
         public void CleanupFlights()
         {
-
-            _flightManagers = new ConcurrentBag<PassengerFlightManager>();
-  
+            foreach (var cts in _managersTokens.Values)
+            {
+                cts.Cancel();
+                cts.Dispose();
+            }
+            _managersTokens.Clear();
+            _previousFlights.Clear();
+            
             GC.Collect();
-        }
-
-        public async Task ExecutePassengerActions()
-        {
-            if (!_flightManagers.Any())
-            {
-                _loggingService.Log<PassengerService>(LogLevel.Information, 
-                    "No initialised flights, nothing to execute");
-                return;
-            }
-
-            var tasks = _flightManagers.Select(p => p.ExecutePassengerActions());
-
-            // Create the aggregated task first
-            Task whenAllTask = Task.WhenAll(tasks);
-
-            try
-            {
-                await whenAllTask; // Throws the first exception encountered
-            }
-            catch (Exception ex)
-            {
-                // Check if the aggregated task has exceptions
-                if (whenAllTask.Exception != null)
-                {
-                    // Handle all exceptions (not just the first one thrown)
-                    foreach (var innerEx in whenAllTask.Exception.InnerExceptions)
-                    {
-                        _loggingService.Log<PassengerService>(LogLevel.Error, $"Exception from task: {innerEx.Message}\n{innerEx.StackTrace}");
-                        
-                    }
-                }
-                else
-                {
-                    // Handle the case where the exception is not from the tasks
-                    // (e.g., cancellation)
-                    _loggingService.Log<PassengerService>(LogLevel.Error, $"General exception {ex.Message}");
-                }
-            }
         }
 
         public async Task RefreshAndInitFlights()
         {
             var availableFlights = await _refreshServiceHolder.GetService().GetAvailableFlights();
 
-            var existingFlights = _flightManagers
-                .Select(fm => fm._flightInfo);
-
             var flightsToInit = availableFlights.Except(_previousFlights, new FlightIdComparer());
 
             if (flightsToInit.Any())
             {
-                    var factory = _serviceProvider.GetRequiredKeyedService<IPassengerFactory>("Airport");
-                    foreach (var flightInfo in flightsToInit)
+                var factory = _serviceProvider.GetRequiredKeyedService<IPassengerFactory>("Airport");
+                foreach (var flightInfo in flightsToInit)
+                {
+                    CancellationTokenSource cts = new();
+                    var flightManager = new PassengerFlightManager(factory, flightInfo, _interactionServiceHolder, _loggingService);
+
+                    // Add to managers dictionary
+                    if(!_managersTokens.TryAdd(flightManager, cts)) 
                     {
-                        _previousFlights.Add(flightInfo);
-                        var flightManager = new PassengerFlightManager(factory, flightInfo, _interactionServiceHolder, _loggingService);
-                        _flightManagers.Add(flightManager);
-                        _loggingService.Log<PassengerService>(LogLevel.Information, 
-                            $"Initialised new flight with id {flightInfo.FlightId}");
+                        _loggingService.Log<PassengerService>(LogLevel.Error, $"Failed to add new flight with id {flightInfo.FlightId}");
+                        return;
                     }
+                    _previousFlights.Add(flightInfo);
+
+                    _loggingService.Log<PassengerService>(LogLevel.Information, 
+                        $"Initialised new flight with id {flightInfo.FlightId}");
+
+                    // Start flight handling task
+                    _ = HandleFlight(flightManager, TimeSpan.FromSeconds(5), cts.Token);
+                }
+            }
+        }
+
+        private async Task HandleFlight(PassengerFlightManager flightManager, TimeSpan actionInterval, CancellationToken cancellationToken)
+        {
+            PeriodicTimer timer = new(actionInterval);
+
+            while(await timer.WaitForNextTickAsync(cancellationToken) && !cancellationToken.IsCancellationRequested)
+            {
+                var task = flightManager.ExecutePassengerActions();
+                
+                try
+                {
+                    await task;
+                }
+                catch (Exception ex)
+                {
+                    if (task.Exception != null)
+                    {
+                        foreach (var innerEx in task.Exception.InnerExceptions)
+                        {
+                            _loggingService.Log<PassengerService>(LogLevel.Error, 
+                                $"Exception from task: {innerEx.Message}\n{innerEx.StackTrace}");
+                        }
+                    }
+                    else
+                    {
+                        _loggingService.Log<PassengerService>(LogLevel.Error, 
+                            $"General exception: {ex.Message}");
+                    }
+                }
             }
         }
 
         private void HandleFlightDeath(PassengerFlightManager manager)
         {   
-            _flightDeathSemaphore.Wait();
-            try
+            // Remove manager and cancel its token
+            if (_managersTokens.TryRemove(manager, out var cts))
             {
-                _flightManagers = new ConcurrentBag<PassengerFlightManager>(
-                    _flightManagers.Except(new[] { manager }));
-            }
-            finally
-            {
-                _flightDeathSemaphore.Release();
+                cts.Cancel();
+                cts.Dispose();
             }
 
             _loggingService.Log<PassengerService>(LogLevel.Information, 
-                $"No more people left for the flight with ID {manager._flightInfo.FlightId}, cleaning up...");
+                $"No more people left for flight {manager._flightInfo.FlightId}, cleaning up...");
         }
+
+        // Return active flight managers
+        public List<PassengerFlightManager> GetFlightManagers() => _managersTokens.Keys.ToList();
 
         public void Dispose()
         {
-            _passengerExecutionSemaphore?.Dispose();
+            CleanupFlights();
+            PassengerFlightManager.OnDeadFlight -= HandleFlightDeath;
         }
-
-        // Rest of the class remains unchanged
-        public List<PassengerFlightManager> GetFlightManagers() => _flightManagers.ToList();
     }
 }
