@@ -15,7 +15,6 @@ namespace Passenger.Services
         private IServiceProvider _serviceProvider;
         private ILoggingService _loggingService;
         private readonly SemaphoreSlim _passengerExecutionSemaphore = new SemaphoreSlim(1, 1);
-        private readonly SemaphoreSlim _flightRefreshSemaphore = new SemaphoreSlim(1,1);
         private readonly SemaphoreSlim _flightDeathSemaphore = new(1,1);
 
         public PassengerService(RefreshServiceHolder refreshServiceHolder,
@@ -83,16 +82,13 @@ namespace Passenger.Services
         {
             var availableFlights = await _refreshServiceHolder.GetService().GetAvailableFlights();
 
-            var existingFlights = _flightManagers.AsEnumerable()
+            var existingFlights = _flightManagers
                 .Select(fm => fm._flightInfo);
 
             var flightsToInit = availableFlights.Except(existingFlights, new FlightIdComparer());
 
             if (flightsToInit.Any())
             {
-                await _flightRefreshSemaphore.WaitAsync();
-                try
-                {
                     var factory = _serviceProvider.GetRequiredKeyedService<IPassengerFactory>("Airport");
                     foreach (var flightInfo in flightsToInit)
                     {
@@ -101,11 +97,6 @@ namespace Passenger.Services
                         _loggingService.Log<PassengerService>(LogLevel.Information, 
                             $"Initialised new flight with id {flightInfo.FlightId}");
                     }
-                }
-                finally
-                {
-                    _flightRefreshSemaphore.Release();
-                }
             }
         }
 

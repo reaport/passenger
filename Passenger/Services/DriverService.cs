@@ -8,9 +8,10 @@ public class DriverService : IDriverService, IDisposable
 {
     private readonly ILoggingService _logger;
     private readonly IPassengerService _passengerService;
-    private bool _isPaused = true; // No longer volatile - protected by semaphore
+    private volatile bool _isPaused = true; 
     private readonly SemaphoreSlim _pauseSemaphore = new SemaphoreSlim(1, 1);
     public PeriodicTimer _refreshTimer;
+    public PeriodicTimer _passengerActionTimer;
     public DriverService(ILoggingService logger, IPassengerService passengerService)
     {
         _logger = logger;
@@ -20,31 +21,21 @@ public class DriverService : IDriverService, IDisposable
     public Task StartAsync(CancellationToken stoppingToken)
     {
         _logger.Log<DriverService>(LogLevel.Information, "Background driving service started running.");
-        _refreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(3));
+        _refreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+        _passengerActionTimer = new(TimeSpan.FromSeconds(5));
         
         // Use Task.Run instead of StartNew for clearer async intent
-        Task.Run(() => DoTimedTasks(_refreshTimer, stoppingToken), stoppingToken);
+        Task.Run(() => RefreshFlights(_refreshTimer, stoppingToken), stoppingToken);
+        Task.Run( () => ExecutePassengerActions(_passengerActionTimer, stoppingToken),stoppingToken);
         
         return Task.CompletedTask;
     }
 
-    private async Task DoTimedTasks(PeriodicTimer timer, CancellationToken cancellationToken)
+    private async Task RefreshFlights(PeriodicTimer timer, CancellationToken cancellationToken)
     {
         while (await timer.WaitForNextTickAsync(cancellationToken) && !cancellationToken.IsCancellationRequested)
-        {
-            // Async-friendly synchronization
-            await _pauseSemaphore.WaitAsync(cancellationToken);
-            try
-            {
-                if (_isPaused)
-                {
-                    continue;
-                }
-            }
-            finally
-            {
-                _pauseSemaphore.Release();
-            }
+        {   
+            if (_isPaused) continue;
 
             try
             {
@@ -55,8 +46,14 @@ public class DriverService : IDriverService, IDisposable
             {
                 _logger.Log<DriverService>(LogLevel.Critical, 
                     $"Could not refresh flights: {e.Message}");
-                continue;
             }
+        }
+    }
+    private async Task ExecutePassengerActions(PeriodicTimer timer, CancellationToken cancellationToken)
+    {
+        while (await timer.WaitForNextTickAsync(cancellationToken) && !cancellationToken.IsCancellationRequested)
+        {
+            if (_isPaused) continue;
 
             try
             {
@@ -67,7 +64,6 @@ public class DriverService : IDriverService, IDisposable
             {
                 _logger.Log<DriverService>(LogLevel.Critical, 
                     $"Unhandled exception executing passenger actions: {e.Message}\n{e.StackTrace}");
-                
                 throw;
             }
         }
