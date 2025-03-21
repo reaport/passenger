@@ -106,7 +106,7 @@ public class Passenger
 
     public async Task<bool> RegisterForFlight(DateTime registrationStart)
     {
-        TimeSpan delay = registrationStart - DateTime.Now;
+        TimeSpan delay = registrationStart - DateTime.UtcNow;
         _logger.Log<Passenger>(LogLevel.Debug, $"Passenger {PassengerId} is waiting to register for flight {FlightInfo.FlightId} until {registrationStart.ToString("o")}");
         if (delay > TimeSpan.Zero)
         {
